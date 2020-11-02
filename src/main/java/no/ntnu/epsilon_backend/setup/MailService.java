@@ -3,23 +3,25 @@ package no.ntnu.epsilon_backend.setup;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.ejb.Stateless;
+import javax.ejb.Singleton;
+import javax.enterprise.event.ObservesAsync;
 import javax.inject.Inject;
 import javax.mail.Authenticator;
-import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
  *
- * @author Rojahno
+ * @author mikael
  */
-@Stateless
+@Log
+@Singleton
 public class MailService {
 
     @Inject
@@ -37,12 +39,9 @@ public class MailService {
     /**
      * Send an email
      *
-     * @param to
-     * @param subject
-     * @param body
-     * @return
+     * @param questionAsked received event
      */
-    public void sendEmail(String to, String subject, String body) {
+    public void onAsyncMessage(@ObservesAsync String questionAsked) {
         try {
             Properties props = new Properties();
             props.put("mail.smtp.auth", "true");
@@ -55,13 +54,18 @@ public class MailService {
                 }
             });
 
-            Message message = new MimeMessage(mailSession);
-            message.setSubject(subject);
-            message.setRecipient(Message.RecipientType.TO, new InternetAddress(to));
-            message.setFrom(new InternetAddress(smtpUser));
-            message.setText(body);
+            MimeMessage mimeMessage = new MimeMessage(mailSession);
+            mimeMessage.setSubject("New Message");
 
-            Transport.send(message);
+            String reciever = "andrersu@ntnu.no";
+            if (reciever != null && reciever.length() > 0) {
+                mimeMessage.setRecipient(MimeMessage.RecipientType.TO, new InternetAddress(reciever));
+                mimeMessage.setFrom(new InternetAddress(smtpUser));
+                mimeMessage.setText(questionAsked);
+                Transport.send(mimeMessage);
+            } else {
+                log.log(Level.INFO, "Failed to find email for user {0}", reciever);
+            }
         } catch (MessagingException ex) {
             Logger.getLogger(MailService.class.getName()).log(Level.SEVERE, null, ex);
         }
