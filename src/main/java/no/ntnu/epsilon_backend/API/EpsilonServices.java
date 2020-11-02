@@ -14,16 +14,17 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.sql.DataSource;
 import javax.validation.constraints.NotBlank;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import no.ntnu.epsilon_backend.API.AuthenticationService;
+import no.ntnu.epsilon_backend.setup.MailService;
 import no.ntnu.epsilon_backend.tables.Faq;
 import no.ntnu.epsilon_backend.tables.Group;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -43,6 +44,9 @@ public class EpsilonServices {
 
     @Inject
     AuthenticationService autenticationService;
+
+    @Inject
+    MailService mailService;
 
     @Context
     SecurityContext sc;
@@ -96,11 +100,26 @@ public class EpsilonServices {
     @Produces(MediaType.APPLICATION_JSON)
     //@RolesAllowed({Group.ADMIN})
     public Response addFaq(
-            @QueryParam("question") @NotBlank String question,
-            @QueryParam("answer") @NotBlank String answer) {
+            @FormParam("question") @NotBlank String question,
+            @FormParam("answer") @NotBlank String answer) {
         Faq faq = new Faq();
         faq.setAnswer(answer);
         faq.setQuestion(question);
         return Response.ok(em.merge(faq)).build();
     }
+
+    /*
+    @return all faqs
+     */
+    @POST
+    @Path("ask_question")
+    //@RolesAllowed({Group.USER})
+    public Response askQuestion(@FormParam("question")
+            @NotBlank String question) {
+
+        mailService.onAsyncMessage(question);
+        return Response.ok(question, MediaType.APPLICATION_JSON).build();
+
+    }
+
 }
