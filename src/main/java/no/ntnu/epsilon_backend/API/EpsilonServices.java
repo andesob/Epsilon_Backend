@@ -13,12 +13,18 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.sql.DataSource;
+import javax.validation.constraints.NotBlank;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
-
 import no.ntnu.epsilon_backend.API.AuthenticationService;
+import no.ntnu.epsilon_backend.tables.Faq;
 import no.ntnu.epsilon_backend.tables.Group;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -72,4 +78,29 @@ public class EpsilonServices {
         return user;
     }
 
+    /*
+    @return all faqs
+     */
+    @GET
+    @Path("get_faqs")
+    //@RolesAllowed({Group.USER})
+    public List<Faq> getAllFaqs() {
+        return em.createNamedQuery(Faq.FIND_ALL_FAQS, Faq.class).getResultList();
+    }
+
+    /*
+    @return all faqs
+     */
+    @POST
+    @Path("add_faqs")
+    @Produces(MediaType.APPLICATION_JSON)
+    //@RolesAllowed({Group.ADMIN})
+    public Response addFaq(
+            @QueryParam("question") @NotBlank String question,
+            @QueryParam("answer") @NotBlank String answer) {
+        Faq faq = new Faq();
+        faq.setAnswer(answer);
+        faq.setQuestion(question);
+        return Response.ok(em.merge(faq)).build();
+    }
 }
