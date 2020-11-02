@@ -27,13 +27,13 @@ import static no.ntnu.epsilon_backend.tables.NewsfeedObject.FIND_ALL_NEWSFEEDOBJ
 @Table(name = "NewsfeedObject")
 @Data
 @AllArgsConstructor
-@NamedQuery(name = FIND_ALL_NEWSFEEDOBJECTS, query = "select n from NewsfeedObject n order by n.newsfeedObjectId DESC")
+@NamedQuery(name = FIND_ALL_NEWSFEEDOBJECTS, query = "select n from NewsfeedObject n order by n.newsfeedObjectId")
 public class NewsfeedObject implements Serializable {
 
     public static final String FIND_ALL_NEWSFEEDOBJECTS = "NewsfeedObject.findAllNewsfeedObjects";
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue
     long newsfeedObjectId;
 
     String title;

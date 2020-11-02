@@ -78,7 +78,7 @@ public class EpsilonServices {
      */
     @GET
     @Path("users")
-    @RolesAllowed({Group.USER})
+    //@RolesAllowed({Group.USER})
     public List<User> getAllUsers() {
         return em.createNamedQuery(User.FIND_ALL_USERS, User.class).getResultList();
     }
@@ -90,6 +90,7 @@ public class EpsilonServices {
 
     @GET
     @Path("newsfeed")
+    @Produces(MediaType.APPLICATION_JSON)
     //@RolesAllowed({Group.USER})
     public List<NewsfeedObject> getAllNewsfeedObjects() {
         return em.createNamedQuery(NewsfeedObject.FIND_ALL_NEWSFEEDOBJECTS, NewsfeedObject.class).getResultList();
@@ -97,11 +98,11 @@ public class EpsilonServices {
 
     @PUT
     @Path("postNews")
-    public NewsfeedObject postNewsfeedObject(@FormParam("title") String title,
+    public Response postNewsfeedObject(@FormParam("title") String title,
             @FormParam("content") String content) {
         NewsfeedObject news = new NewsfeedObject(title, content, LocalDateTime.now(), LocalDateTime.now());
-
-        return null;
+        em.persist(news);
+        return Response.ok(news).build();
     }
 
     /*
