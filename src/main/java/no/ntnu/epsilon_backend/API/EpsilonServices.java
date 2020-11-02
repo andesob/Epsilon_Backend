@@ -5,6 +5,9 @@
  */
 package no.ntnu.epsilon_backend.API;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
@@ -13,13 +16,16 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.sql.DataSource;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.SecurityContext;
 
 import no.ntnu.epsilon_backend.API.AuthenticationService;
 import no.ntnu.epsilon_backend.tables.Group;
+import no.ntnu.epsilon_backend.tables.NewsfeedObject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 /**
@@ -70,6 +76,22 @@ public class EpsilonServices {
     private User getCurrentUser() {
         User user = em.find(User.class, sc.getUserPrincipal().getName());
         return user;
+    }
+
+    @GET
+    @Path("newsfeed")
+    //@RolesAllowed({Group.USER})
+    public List<NewsfeedObject> getAllNewsfeedObjects() {
+        return em.createNamedQuery(NewsfeedObject.FIND_ALL_NEWSFEEDOBJECTS, NewsfeedObject.class).getResultList();
+    }
+
+    @PUT
+    @Path("postNews")
+    public NewsfeedObject postNewsfeedObject(@FormParam("title") String title,
+            @FormParam("content") String content) {
+        NewsfeedObject news = new NewsfeedObject(title, content, LocalDateTime.now(), LocalDateTime.now());
+
+        return null;
     }
 
 }
