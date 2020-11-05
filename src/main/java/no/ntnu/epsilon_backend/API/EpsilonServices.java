@@ -130,7 +130,7 @@ public class EpsilonServices {
     /*
     @return all faqs
      */
-    @POST
+    @PUT
     @Path("add_faqs")
     @Produces(MediaType.APPLICATION_JSON)
     //@RolesAllowed({Group.ADMIN})
