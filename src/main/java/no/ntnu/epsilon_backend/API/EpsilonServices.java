@@ -5,10 +5,19 @@
  */
 package no.ntnu.epsilon_backend.API;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import no.ntnu.epsilon_backend.tables.User;
@@ -29,9 +38,11 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import no.ntnu.epsilon_backend.API.AuthenticationService;
+import no.ntnu.epsilon_backend.domain.ImageSend;
 import no.ntnu.epsilon_backend.setup.MailService;
 import no.ntnu.epsilon_backend.tables.Faq;
 import no.ntnu.epsilon_backend.tables.Group;
+import no.ntnu.epsilon_backend.tables.Image;
 import no.ntnu.epsilon_backend.tables.NewsfeedObject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -143,5 +154,64 @@ public class EpsilonServices {
         mailService.onAsyncMessage(question);
         return Response.ok(question, MediaType.APPLICATION_JSON).build();
 
+    }
+
+    //TODO: Change filepath so it matches an ubuntu server instead of windows specific filesystem.
+    @POST
+    @Path("uploadPictureAsString")
+    public Response uploadPictureAsString(@FormParam("base64String") String base64String, @FormParam("userId") String userId, @FormParam("filename") String filename) {
+
+        //byte[] decodedString = android.util.Base64.decode(imageString, android.util.Base64.DEFAULT);
+        //Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+        byte[] decodedString = Base64.getMimeDecoder().decode(base64String);
+        String filepath = "/C:/Dataingenior/" + filename;
+
+        try {
+            File file = new File(filepath);
+            FileOutputStream imageOutputStream = new FileOutputStream(file);
+            imageOutputStream.write(decodedString);
+            imageOutputStream.close();
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(EpsilonServices.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(EpsilonServices.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        User user = em.find(User.class, userId);
+        Image image = new Image(filepath, user);
+        em.persist(image);
+        return Response.ok(filename).build();
+    }
+
+    @GET
+    @Path("getUserPictures")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getUserPictures() {
+
+        List<Image> imageList = em.createNamedQuery(Image.FIND_ALL_IMAGES).getResultList();
+        List<ImageSend> imageSendList = new ArrayList<>();
+        for (Image i : imageList) {
+            String base64String = encodeBase64(i);
+            ImageSend imageSend = new ImageSend(i.getImageId(), base64String, i.getUser());
+            imageSendList.add(imageSend);
+        }
+        return Response.ok(imageSendList).build();
+    }
+
+    private String encodeBase64(Image i) {
+        String base64String = "";
+        File file = new File(i.getFilepath());
+        try {
+            FileInputStream fileInputStream = new FileInputStream(file);
+            byte[] imageData = new byte[(int) file.length()];
+            fileInputStream.read(imageData);
+
+            base64String = Base64.getEncoder().encodeToString(imageData);
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(EpsilonServices.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(EpsilonServices.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return base64String;
     }
 }
