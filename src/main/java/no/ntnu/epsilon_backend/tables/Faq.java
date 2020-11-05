@@ -31,7 +31,7 @@ public class Faq implements Serializable {
 
     @Id
     @GeneratedValue
-    Long questionId;
+    long questionId;
 
     String question;
 

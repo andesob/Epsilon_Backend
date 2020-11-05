@@ -5,8 +5,6 @@
  */
 package no.ntnu.epsilon_backend.API;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
@@ -16,7 +14,6 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.sql.DataSource;
-import javax.ws.rs.FormParam;
 import javax.validation.constraints.NotBlank;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
@@ -113,6 +110,22 @@ public class EpsilonServices {
     public List<Faq> getAllFaqs() {
         return em.createNamedQuery(Faq.FIND_ALL_FAQS, Faq.class).getResultList();
     }
+
+    /*
+    @return alter a faq
+     */
+    @POST
+    @Path("edit_faq")
+    //@RolesAllowed({Group.Admin})
+    public Response editFaqs(@FormParam("question") String question, @FormParam("answer") String answer, @FormParam("questionId") long id) {
+
+        Faq faq = em.find(Faq.class, id);
+        faq.setQuestion(question);
+        faq.setAnswer(answer);
+
+        return Response.ok().build();
+    }
+
 
     /*
     @return all faqs
