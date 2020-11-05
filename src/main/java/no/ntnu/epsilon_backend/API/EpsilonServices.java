@@ -40,6 +40,7 @@ import javax.ws.rs.core.SecurityContext;
 import no.ntnu.epsilon_backend.API.AuthenticationService;
 import no.ntnu.epsilon_backend.domain.ImageSend;
 import no.ntnu.epsilon_backend.setup.MailService;
+import no.ntnu.epsilon_backend.tables.AboutUsObject;
 import no.ntnu.epsilon_backend.tables.Faq;
 import no.ntnu.epsilon_backend.tables.Group;
 import no.ntnu.epsilon_backend.tables.Image;
@@ -154,6 +155,23 @@ public class EpsilonServices {
         mailService.onAsyncMessage(question);
         return Response.ok(question, MediaType.APPLICATION_JSON).build();
 
+    }
+
+    @POST
+    @Path("addAboutUsObject")
+    public Response addAboutUsObject(@FormParam("position") String position, @FormParam("userid") String userid) {
+        User user = em.find(User.class, userid);
+
+        AboutUsObject aboutUsObject = new AboutUsObject(user, position);
+        em.persist(aboutUsObject);
+
+        return Response.ok(aboutUsObject).build();
+    }
+
+    @GET
+    @Path("getAboutUsObjects")
+    public Response getAboutUsObjects() {
+        return Response.ok(em.createNamedQuery(AboutUsObject.FIND_ALL_ABOUT_US_OBJECTS).getResultList()).build();
     }
 
     //TODO: Change filepath so it matches an ubuntu server instead of windows specific filesystem.

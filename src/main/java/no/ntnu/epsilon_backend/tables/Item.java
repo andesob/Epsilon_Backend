@@ -35,7 +35,6 @@ import static no.ntnu.epsilon_backend.tables.Item.FIND_ALL_ITEMS;
 @Data
 @AllArgsConstructor
 @NamedQuery(name = FIND_ALL_ITEMS, query = "select u from Item u order by u.title")
-//@NamedQuery(name = FIND_ITEMS_BY_USERID, query = "select u from Item u where u.userid in :ids")
 public class Item implements Serializable {
 
     public static final String FIND_ALL_ITEMS = "Item.findAllUsers";
