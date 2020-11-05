@@ -19,6 +19,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.SecurityContext;
 
 import no.ntnu.epsilon_backend.API.AuthenticationService;
+import no.ntnu.epsilon_backend.tables.Calendar;
 import no.ntnu.epsilon_backend.tables.Group;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -70,6 +71,12 @@ public class EpsilonServices {
     private User getCurrentUser() {
         User user = em.find(User.class, sc.getUserPrincipal().getName());
         return user;
+    }
+    
+    @GET
+    @Path("getcalendar")
+    public List<Calendar> getCalendars(){
+        return em.createNamedQuery(Calendar.FIND_ALL_CALENDAR_ITEMS,Calendar.class).getResultList();
     }
 
 }
