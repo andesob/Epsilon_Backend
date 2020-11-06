@@ -22,9 +22,14 @@ import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import no.ntnu.epsilon_backend.tables.User;
 import javax.inject.Inject;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.sql.DataSource;
+import javax.transaction.NotSupportedException;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
 import javax.ws.rs.FormParam;
 import javax.validation.constraints.NotBlank;
 import javax.ws.rs.FormParam;
@@ -198,7 +203,20 @@ public class EpsilonServices {
         User user = em.find(User.class, userId);
         Image image = new Image(filepath, user);
         em.persist(image);
-        return Response.ok(filename).build();
+        ImageSend imageSend = new ImageSend(image.getImageId(), base64String, image.getUser());
+        return Response.ok(imageSend).build();
+    }
+
+    @POST
+    @Path("deletePicture")
+    public Response deletePicture(@FormParam("pictureId") String pictureId) {
+        long imageId = Long.valueOf(pictureId);
+        Image image = null;
+        image = em.find(Image.class, imageId);
+        if (image != null) {
+            em.remove(image);
+        }
+        return Response.ok(image).build();
     }
 
     @GET

@@ -10,11 +10,13 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import static no.ntnu.epsilon_backend.tables.Image.FIND_ALL_IMAGES;
+import static no.ntnu.epsilon_backend.tables.Image.FIND_IMAGE_BY_ID;
 
 /**
  *
@@ -24,10 +26,15 @@ import static no.ntnu.epsilon_backend.tables.Image.FIND_ALL_IMAGES;
 @Table(name = "Image")
 @Data
 @AllArgsConstructor
-@NamedQuery(name = FIND_ALL_IMAGES, query = "select i from Image i order by i.imageId")
+@NamedQueries({
+    @NamedQuery(name = FIND_ALL_IMAGES, query = "select i from Image i order by i.imageId"),
+    @NamedQuery(name = FIND_IMAGE_BY_ID, query = "select i from Image i "
+            + "where i.imageId = :id")
+})
 public class Image implements Serializable {
 
     public static final String FIND_ALL_IMAGES = "Image.findAllImages";
+    public static final String FIND_IMAGE_BY_ID = "Image.findById";
 
     @Id
     @GeneratedValue
