@@ -6,6 +6,7 @@
 package no.ntnu.epsilon_backend.API;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
@@ -15,6 +16,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.sql.DataSource;
 import javax.validation.constraints.NotBlank;
+import javax.ws.rs.BeanParam;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -26,6 +28,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import no.ntnu.epsilon_backend.API.AuthenticationService;
+import no.ntnu.epsilon_backend.domain.LatLng;
+import no.ntnu.epsilon_backend.domain.Time;
 import no.ntnu.epsilon_backend.tables.Calendar;
 import no.ntnu.epsilon_backend.setup.MailService;
 import no.ntnu.epsilon_backend.tables.Faq;
@@ -162,5 +166,20 @@ public class EpsilonServices {
         mailService.onAsyncMessage(question);
         return Response.ok(question, MediaType.APPLICATION_JSON).build();
 
+    }
+    
+    @PUT
+    @Path("add_calendar_item")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response addCalendarItem(@FormParam("title")String title,
+                                    @FormParam("description")String description,
+                                    @BeanParam LatLng latLng,
+                                    @BeanParam Time startTime,
+                                    @BeanParam Time endTime,
+                                    @FormParam("address")String address){
+        
+        Calendar calendar = new Calendar(title,description,latLng,startTime,endTime,address);
+        em.persist(calendar);
+        return Response.ok(calendar).build();
     }
 }

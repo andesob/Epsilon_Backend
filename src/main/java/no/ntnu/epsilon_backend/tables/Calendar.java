@@ -13,6 +13,9 @@ import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Generated;
+import lombok.NoArgsConstructor;
+import no.ntnu.epsilon_backend.domain.LatLng;
+import no.ntnu.epsilon_backend.domain.Time;
 import static no.ntnu.epsilon_backend.tables.Calendar.FIND_ALL_CALENDAR_ITEMS;
 
 /**
@@ -24,6 +27,7 @@ import static no.ntnu.epsilon_backend.tables.Calendar.FIND_ALL_CALENDAR_ITEMS;
 @Table(name = "CALENDAR_ITEMS")
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 @NamedQuery(name = FIND_ALL_CALENDAR_ITEMS,query = " select c from Calendar c") //Order by day if problems putting it in order in app
 
 public class Calendar implements Serializable{
@@ -32,28 +36,23 @@ public class Calendar implements Serializable{
     @Id
     @Generated
     Long id;
-    
-    String startMinute;
-    String startHour;
-    String startDay;
-    String startMonth;
-    String startYear;
-    
-    String endMinute;
-    String endHour;
-    String endDay;
-    String endMonth;
-    String endYear;
-    
     String title;
     String description;
     
-    String address;
-    String latitude;
-    String longitude;
+    LatLng latLng;
     
-    public Calendar(){
-        
+    Time startTime;   
+    Time endTime;  
+    
+    String address;
+    
+    public Calendar(String title, String description, LatLng latLng, Time startTime, Time endTime, String address) {
+        this.title = title;
+        this.description = description;
+        this.latLng = latLng;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.address = address;
     }
     
     
