@@ -178,7 +178,6 @@ public class AuthenticationService {
             @FormParam("pwd") String pwd,
             @FormParam("email") String email,
             @FormParam("lastName") String lastName) {
-        System.out.println(em);
         User user = em.find(User.class, email);
         if (user != null) {
             log.log(Level.INFO, "user already exists {0}", email);

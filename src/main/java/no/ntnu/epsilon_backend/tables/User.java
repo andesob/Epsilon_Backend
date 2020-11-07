@@ -61,7 +61,7 @@ public class User implements Serializable {
 
     @ManyToMany
     @JoinTable(name = "AUSERGROUP",
-            joinColumns = @JoinColumn(name = "email", referencedColumnName = "email"),
+            joinColumns = @JoinColumn(name = "userid", referencedColumnName = "userid"),
             inverseJoinColumns = @JoinColumn(name = "name", referencedColumnName = "name"))
     List<Group> groups;
 
