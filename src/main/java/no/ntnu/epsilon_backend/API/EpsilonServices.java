@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -32,6 +33,7 @@ import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import javax.ws.rs.FormParam;
 import javax.validation.constraints.NotBlank;
+import javax.ws.rs.BeanParam;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -43,6 +45,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import no.ntnu.epsilon_backend.API.AuthenticationService;
+import no.ntnu.epsilon_backend.domain.LatLng;
+import no.ntnu.epsilon_backend.domain.Time;
+import no.ntnu.epsilon_backend.tables.Calendar;
 import no.ntnu.epsilon_backend.domain.ImageSend;
 import no.ntnu.epsilon_backend.setup.MailService;
 import no.ntnu.epsilon_backend.tables.AboutUsObject;
@@ -104,6 +109,12 @@ public class EpsilonServices {
         User user = em.find(User.class, sc.getUserPrincipal().getName());
         return user;
     }
+    
+    @GET
+    @Path("getcalendar")
+    public List<Calendar> getCalendars(){
+        return em.createNamedQuery(Calendar.FIND_ALL_CALENDAR_ITEMS,Calendar.class).getResultList();
+    }
 
     @GET
     @Path("newsfeed")
@@ -133,9 +144,25 @@ public class EpsilonServices {
     }
 
     /*
-    @return all faqs
+    @return alter a faq
      */
     @POST
+    @Path("edit_faq")
+    //@RolesAllowed({Group.Admin})
+    public Response editFaqs(@FormParam("question") String question, @FormParam("answer") String answer, @FormParam("questionId") long id) {
+
+        Faq faq = em.find(Faq.class, id);
+        faq.setQuestion(question);
+        faq.setAnswer(answer);
+
+        return Response.ok().build();
+    }
+
+
+    /*
+    @return all faqs
+     */
+    @PUT
     @Path("add_faqs")
     @Produces(MediaType.APPLICATION_JSON)
     //@RolesAllowed({Group.ADMIN})
@@ -160,6 +187,21 @@ public class EpsilonServices {
         mailService.onAsyncMessage(question);
         return Response.ok(question, MediaType.APPLICATION_JSON).build();
 
+    }
+    
+    @PUT
+    @Path("add_calendar_item")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response addCalendarItem(@FormParam("title")String title,
+                                    @FormParam("description")String description,
+                                    @BeanParam LatLng latLng,
+                                    @BeanParam Time startTime,
+                                    @BeanParam Time endTime,
+                                    @FormParam("address")String address){
+        
+        Calendar calendar = new Calendar(title,description,latLng,startTime,endTime,address);
+        em.persist(calendar);
+        return Response.ok(calendar).build();
     }
 
     @POST
