@@ -33,17 +33,22 @@ public class Calendar implements Serializable{
     @Generated
     Long id;
     
-    String date;
-    String day;
-    String month;
+    String startMinute;
+    String startHour;
+    String startDay;
+    String startMonth;
+    String startYear;
+    
+    String endMinute;
+    String endHour;
+    String endDay;
+    String endMonth;
+    String endYear;
     
     String title;
-    
     String description;
-    String time;
     
-    String adress;
-   
+    String address;
     String latitude;
     String longitude;
     
