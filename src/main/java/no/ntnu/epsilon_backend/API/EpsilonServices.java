@@ -227,14 +227,20 @@ public class EpsilonServices {
         List<Image> imageList = em.createNamedQuery(Image.FIND_ALL_IMAGES).getResultList();
         List<ImageSend> imageSendList = new ArrayList<>();
         for (Image i : imageList) {
-            String base64String = encodeBase64(i);
+            String base64String;
+            try {
+                base64String = encodeBase64(i);
             ImageSend imageSend = new ImageSend(i.getImageId(), base64String, i.getUser());
             imageSendList.add(imageSend);
+            } catch (FileNotFoundException ex) {
+                Logger.getLogger(EpsilonServices.class.getName()).log(Level.SEVERE, null, ex);
+                return Response.status(Response.Status.BAD_REQUEST).build();
+            }
         }
         return Response.ok(imageSendList).build();
     }
 
-    private String encodeBase64(Image i) {
+    private String encodeBase64(Image i) throws FileNotFoundException{
         String base64String = "";
         File file = new File(i.getFilepath());
         try {
