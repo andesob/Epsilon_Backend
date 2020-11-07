@@ -17,8 +17,8 @@ import org.eclipse.microprofile.auth.LoginConfig;
  */
 @DatabaseIdentityStoreDefinition(
         dataSourceLookup = DatasourceProducer.JNDI_NAME,
-        callerQuery = "select password from auser where phoneNumber = ?",
-        groupsQuery = "select name from ausergroup where phoneNumber  = ?",
+        callerQuery = "select password from auser where email = ?",
+        groupsQuery = "select name from ausergroup where email  = ?",
         hashAlgorithm = PasswordHash.class,
         priority = 80)
 @DeclareRoles({Group.ADMIN, Group.USER})
