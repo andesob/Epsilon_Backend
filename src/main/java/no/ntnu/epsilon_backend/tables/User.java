@@ -68,6 +68,7 @@ public class User implements Serializable {
     String firstName;
     String middleName;
     String lastName;
+
     @Email
     String email;
 

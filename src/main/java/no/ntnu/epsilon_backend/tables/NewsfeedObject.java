@@ -33,7 +33,7 @@ public class NewsfeedObject implements Serializable {
     public static final String FIND_ALL_NEWSFEEDOBJECTS = "NewsfeedObject.findAllNewsfeedObjects";
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue
     long newsfeedObjectId;
 
     String title;
