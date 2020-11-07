@@ -100,7 +100,7 @@ public class AuthenticationService {
 
     /**
      *
-     * @param uid
+     * @param email
      * @param pwd
      * @param request
      * @return
@@ -108,11 +108,11 @@ public class AuthenticationService {
     @GET
     @Path("login")
     public Response login(
-            @QueryParam("uid") @NotBlank String uid,
+            @QueryParam("email") @NotBlank String email,
             @QueryParam("pwd") @NotBlank String pwd,
             @Context HttpServletRequest request) {
         CredentialValidationResult result = identityStoreHandler.validate(
-                new UsernamePasswordCredential(uid, pwd));
+                new UsernamePasswordCredential(email, pwd));
 
         if (result.getStatus() == CredentialValidationResult.Status.VALID) {
             String token = issueToken(result.getCallerPrincipal().getName(),
@@ -174,18 +174,17 @@ public class AuthenticationService {
     @POST
     @Path("create_user")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response createUser(@FormParam("uid") String uid, @FormParam("firstName") String firstName,
+    public Response createUser(@FormParam("firstName") String firstName,
             @FormParam("pwd") String pwd,
             @FormParam("email") String email,
             @FormParam("lastName") String lastName) {
         System.out.println(em);
-        User user = em.find(User.class, uid);
+        User user = em.find(User.class, email);
         if (user != null) {
-            log.log(Level.INFO, "user already exists {0}", uid);
-            return Response.status(Response.Status.BAD_REQUEST).build();
+            log.log(Level.INFO, "user already exists {0}", email);
+            return Response.serverError().entity("Email already in use").build();
         } else {
             user = new User();
-            user.setUserid(uid);
             user.setFirstName(firstName);
             user.setPassword(hasher.generate(pwd.toCharArray()));
             user.setEmail(email);

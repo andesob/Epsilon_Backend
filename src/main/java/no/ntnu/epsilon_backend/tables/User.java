@@ -1,9 +1,7 @@
 package no.ntnu.epsilon_backend.tables;
 
 import java.io.Serializable;
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,16 +13,14 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.MapKeyColumn;
 import javax.persistence.NamedQuery;
-import javax.persistence.PrePersist;
 import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.Version;
 import javax.validation.constraints.Email;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -54,16 +50,11 @@ public class User implements Serializable {
     }
 
     @Id
+    @GeneratedValue
     String userid;
 
     @JsonbTransient
     String password;
-
-    @Version
-    Timestamp version;
-
-    @Temporal(javax.persistence.TemporalType.DATE)
-    Date created;
 
     @Enumerated(EnumType.STRING)
     State currentState = State.ACTIVE;
@@ -85,11 +76,6 @@ public class User implements Serializable {
     @MapKeyColumn(name = "key")
     @Column(name = "value")
     Map<String, String> properties = new HashMap<>();
-
-    @PrePersist
-    protected void onCreate() {
-        created = new Date();
-    }
 
     public List<Group> getGroups() {
         if (groups == null) {
