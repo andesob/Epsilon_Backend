@@ -65,8 +65,8 @@ import org.eclipse.microprofile.jwt.JsonWebToken;
 @Log
 public class AuthenticationService {
 
-    private static final String INSERT_USERGROUP = "INSERT INTO AUSERGROUP(NAME,USERID) VALUES (?,?)";
-    private static final String DELETE_USERGROUP = "DELETE FROM AUSERGROUP WHERE NAME = ? AND USERID = ?";
+    private static final String INSERT_USERGROUP = "INSERT INTO AUSERGROUP(NAME,EMAIL) VALUES (?,?)";
+    private static final String DELETE_USERGROUP = "DELETE FROM AUSERGROUP WHERE NAME = ? AND EMAIL = ?";
 
     @Inject
     KeyService keyService;
