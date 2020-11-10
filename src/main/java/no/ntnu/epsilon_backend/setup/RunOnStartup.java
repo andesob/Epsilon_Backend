@@ -36,6 +36,7 @@ public class RunOnStartup {
         if (groups == 0) {
             em.persist(new Group(Group.USER));
             em.persist(new Group(Group.ADMIN));
+            em.persist(new Group(Group.BOARD));
         }
     }
 }

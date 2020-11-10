@@ -19,6 +19,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.security.DeclareRoles;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import no.ntnu.epsilon_backend.tables.User;
@@ -61,8 +62,9 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
  *
  * @author rojahno
  */
-@Path("/web")
+@Path("web")
 @Stateless
+@DeclareRoles(Group.USER)
 public class EpsilonServices {
 
     DataSource ds;
@@ -100,7 +102,7 @@ public class EpsilonServices {
      */
     @GET
     @Path("users")
-    //@RolesAllowed({Group.USER})
+    @RolesAllowed({Group.USER})
     public List<User> getAllUsers() {
         return em.createNamedQuery(User.FIND_ALL_USERS, User.class).getResultList();
     }
@@ -109,11 +111,11 @@ public class EpsilonServices {
         User user = em.find(User.class, sc.getUserPrincipal().getName());
         return user;
     }
-    
+
     @GET
     @Path("getcalendar")
-    public List<Calendar> getCalendars(){
-        return em.createNamedQuery(Calendar.FIND_ALL_CALENDAR_ITEMS,Calendar.class).getResultList();
+    public List<Calendar> getCalendars() {
+        return em.createNamedQuery(Calendar.FIND_ALL_CALENDAR_ITEMS, Calendar.class).getResultList();
     }
 
     @GET
@@ -188,18 +190,18 @@ public class EpsilonServices {
         return Response.ok(question, MediaType.APPLICATION_JSON).build();
 
     }
-    
+
     @PUT
     @Path("add_calendar_item")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response addCalendarItem(@FormParam("title")String title,
-                                    @FormParam("description")String description,
-                                    @BeanParam LatLng latLng,
-                                    @BeanParam Time startTime,
-                                    @BeanParam Time endTime,
-                                    @FormParam("address")String address){
-        
-        Calendar calendar = new Calendar(title,description,latLng,startTime,endTime,address);
+    public Response addCalendarItem(@FormParam("title") String title,
+            @FormParam("description") String description,
+            @BeanParam LatLng latLng,
+            @BeanParam Time startTime,
+            @BeanParam Time endTime,
+            @FormParam("address") String address) {
+
+        Calendar calendar = new Calendar(title, description, latLng, startTime, endTime, address);
         em.persist(calendar);
         return Response.ok(calendar).build();
     }
@@ -272,8 +274,8 @@ public class EpsilonServices {
             String base64String;
             try {
                 base64String = encodeBase64(i);
-            ImageSend imageSend = new ImageSend(i.getImageId(), base64String, i.getUser());
-            imageSendList.add(imageSend);
+                ImageSend imageSend = new ImageSend(i.getImageId(), base64String, i.getUser());
+                imageSendList.add(imageSend);
             } catch (FileNotFoundException ex) {
                 Logger.getLogger(EpsilonServices.class.getName()).log(Level.SEVERE, null, ex);
                 return Response.status(Response.Status.BAD_REQUEST).build();
@@ -282,7 +284,7 @@ public class EpsilonServices {
         return Response.ok(imageSendList).build();
     }
 
-    private String encodeBase64(Image i) throws FileNotFoundException{
+    private String encodeBase64(Image i) throws FileNotFoundException {
         String base64String = "";
         File file = new File(i.getFilepath());
         try {

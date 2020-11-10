@@ -21,7 +21,7 @@ import org.eclipse.microprofile.auth.LoginConfig;
         groupsQuery = "select name from ausergroup where userid  = ?",
         hashAlgorithm = PasswordHash.class,
         priority = 80)
-@DeclareRoles({Group.ADMIN, Group.USER})
+@DeclareRoles({Group.ADMIN, Group.USER, Group.BOARD})
 @LoginConfig(authMethod = "MP-JWT", realmName = "template")
 public class SecurityConfiguration {
 }
