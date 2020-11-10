@@ -26,6 +26,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import static no.ntnu.epsilon_backend.tables.User.FIND_ALL_USERS;
+import static no.ntnu.epsilon_backend.tables.User.FIND_USER_BY_EMAIL;
 import static no.ntnu.epsilon_backend.tables.User.FIND_USER_BY_IDS;
 
 /**
@@ -39,11 +40,13 @@ import static no.ntnu.epsilon_backend.tables.User.FIND_USER_BY_IDS;
 @AllArgsConstructor
 @NamedQuery(name = FIND_ALL_USERS, query = "select u from User u order by u.firstName")
 @NamedQuery(name = FIND_USER_BY_IDS, query = "select u from User u where u.userid in :ids")
+@NamedQuery(name = FIND_USER_BY_EMAIL, query = "select u from User u where u.email = :email")
 @NoArgsConstructor
 public class User implements Serializable {
 
     public static final String FIND_USER_BY_IDS = "User.findUserByIds";
     public static final String FIND_ALL_USERS = "User.findAllUsers";
+    public static final String FIND_USER_BY_EMAIL = "User.findUserByEmail";
 
     public enum State {
         ACTIVE, INACTIVE

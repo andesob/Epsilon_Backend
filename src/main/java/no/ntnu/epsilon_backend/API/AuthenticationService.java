@@ -111,8 +111,9 @@ public class AuthenticationService {
             @QueryParam("email") @NotBlank String email,
             @QueryParam("pwd") @NotBlank String pwd,
             @Context HttpServletRequest request) {
+        User user = em.createNamedQuery(User.FIND_USER_BY_EMAIL, User.class).setParameter("email", email).getSingleResult();
         CredentialValidationResult result = identityStoreHandler.validate(
-                new UsernamePasswordCredential(email, pwd));
+                new UsernamePasswordCredential(user.getUserid(), pwd));
 
         if (result.getStatus() == CredentialValidationResult.Status.VALID) {
             String token = issueToken(result.getCallerPrincipal().getName(),
@@ -216,8 +217,7 @@ public class AuthenticationService {
             return Response.status(Response.Status.FORBIDDEN).build();
         }
 
-        try (Connection c = dataSource.getConnection();
-                PreparedStatement psg = c.prepareStatement(INSERT_USERGROUP)) {
+        try ( Connection c = dataSource.getConnection();  PreparedStatement psg = c.prepareStatement(INSERT_USERGROUP)) {
             psg.setString(1, role);
             psg.setString(2, uid);
             psg.executeUpdate();
@@ -263,8 +263,7 @@ public class AuthenticationService {
             return Response.status(Response.Status.FORBIDDEN).build();
         }
 
-        try (Connection c = dataSource.getConnection();
-                PreparedStatement psg = c.prepareStatement(DELETE_USERGROUP)) {
+        try ( Connection c = dataSource.getConnection();  PreparedStatement psg = c.prepareStatement(DELETE_USERGROUP)) {
             psg.setString(1, role);
             psg.setString(2, uid);
             psg.executeUpdate();
