@@ -19,6 +19,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.security.DeclareRoles;
 import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import no.ntnu.epsilon_backend.tables.User;
@@ -63,6 +64,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
  */
 @Path("/web")
 @Stateless
+@DeclareRoles(Group.USER)
 public class EpsilonServices {
 
     DataSource ds;
