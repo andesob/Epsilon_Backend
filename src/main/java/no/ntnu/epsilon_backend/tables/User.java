@@ -25,6 +25,7 @@ import javax.validation.constraints.Email;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import no.ntnu.epsilon_backend.domain.EmailVerificationHash;
 import static no.ntnu.epsilon_backend.tables.User.FIND_ALL_USERS;
 import static no.ntnu.epsilon_backend.tables.User.FIND_USER_BY_EMAIL;
 import static no.ntnu.epsilon_backend.tables.User.FIND_USER_BY_HASH;
@@ -42,7 +43,7 @@ import static no.ntnu.epsilon_backend.tables.User.FIND_USER_BY_IDS;
 @NamedQuery(name = FIND_ALL_USERS, query = "select u from User u order by u.firstName")
 @NamedQuery(name = FIND_USER_BY_IDS, query = "select u from User u where u.userid in :ids")
 @NamedQuery(name = FIND_USER_BY_EMAIL, query = "select u from User u where u.email = :email")
-@NamedQuery(name = FIND_USER_BY_HASH, query = "select u from User u where u.myHash = :myHash")
+@NamedQuery(name = FIND_USER_BY_HASH, query = "select u from User u where u.emailHash = :emailHash")
 @NoArgsConstructor
 public class User implements Serializable {
 
@@ -81,8 +82,10 @@ public class User implements Serializable {
     @Column(name = "validated")
     Boolean validated;
 
-    @Column(name = "myHash")
-    String myHash;
+    @Column(name = "EmailVerificationHash")
+    EmailVerificationHash emailVerificationHash;
+
+    String emailHash;
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "auser_properties", joinColumns = @JoinColumn(name = "uid"))

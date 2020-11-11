@@ -46,13 +46,13 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Random;
 import java.util.Set;
+import javax.servlet.http.HttpServletResponse;
+import no.ntnu.epsilon_backend.domain.EmailVerificationHash;
 import no.ntnu.epsilon_backend.setup.KeyService;
 import no.ntnu.epsilon_backend.setup.MailService;
 import no.ntnu.epsilon_backend.tables.Group;
 import no.ntnu.epsilon_backend.tables.User;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
 /**
@@ -138,32 +138,33 @@ public class AuthenticationService {
     @GET
     @Path("activateAccount")
     public Response activateAccount(
-            @QueryParam("key1") @NotBlank String myHash) {
+            @Context HttpServletRequest request, @Context HttpServletResponse response) {
 
-        User user = new User();
+        User user = null;
+        String emailHash = request.getParameter("key1");
         try {
-            user = em.createNamedQuery(User.FIND_USER_BY_HASH, User.class).setParameter("myHash", myHash).getSingleResult();
+            user = em.createNamedQuery(User.FIND_USER_BY_HASH, User.class).setParameter("emailHash", emailHash).getSingleResult();
 
-        } catch (Exception e) {
-        }
-        if (user != null && !user.getValidated()) {
-            user.setValidated(true);
+            EmailVerificationHash hash = user.getEmailVerificationHash();
 
-            try {
-                // URI uri = new URI("/Users/rojahno/NetBeansProjects/Epsilon_Backend/src/main/webapp/index.html");
-                //Response.temporaryRedirect(uri);
-                System.out.println("It worked");
-
-            } catch (Exception e) {
-                e.getMessage();
+            if (System.currentTimeMillis() > hash.getTimeWhenExpired()) {
+                return Response.status(Response.Status.GONE).build();
             }
 
-        } else {
-            //response.sendRedirect("index.html");
-            System.out.println("It didnt work");
-        }
+            if (user != null && !user.getValidated()) {
+                user.setValidated(true);
+                System.out.println("It worked");
+                response.sendRedirect("../../Success.jsp");
 
-        return Response.status(Response.Status.ACCEPTED).build();
+            } else {
+                response.sendRedirect("../../Failure.jsp");
+                System.out.println("It didnt work");
+            }
+        } catch (Exception e) {
+            e.getMessage();
+        }
+        return Response.status(Response.Status.OK).build();
+
     }
 
     /**
@@ -235,16 +236,12 @@ public class AuthenticationService {
             user.setValidated(Boolean.FALSE);
             Group usergroup = em.find(Group.class, Group.USER);
             user.getGroups().add(usergroup);
-
-            // Generate Hash Code which helps in creating Activation Link
-            Random theRandom = new Random();
-            theRandom.nextInt(999999);
-            String myHash = DigestUtils.md5Hex("" + theRandom);
-            user.setMyHash(myHash);
+            user.setEmailVerificationHash(new EmailVerificationHash());
+            user.setEmailHash(user.getEmailVerificationHash().getHash());
 
             ArrayList arrayList = new ArrayList<String>();
             arrayList.add(user.getEmail());
-            arrayList.add(user.getMyHash());
+            arrayList.add(user.getEmailVerificationHash().getHash());
 
             mailService.onAsyncVerificationEmail(arrayList);
 

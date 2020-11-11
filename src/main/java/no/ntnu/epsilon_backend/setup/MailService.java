@@ -97,7 +97,7 @@ public class MailService {
                     mimeMessage.setRecipient(MimeMessage.RecipientType.TO, new InternetAddress(reciever));
                     mimeMessage.setFrom(new InternetAddress(smtpUser));
                     mimeMessage.setSubject("Epsilon Email Verification Link");
-                    mimeMessage.setText("Click this link to confirm your email address and complete setup for your account."
+                    mimeMessage.setText("This link is valid for 30 minutes. Click this link to confirm your email address and complete setup for your account."
                             + "\n\nVerification Link: " + "http://localhost:8080/Epsilon_Backend/api/auth/activateAccount?key1=" + hash);
                     Transport.send(mimeMessage);
                 } else {

@@ -10,28 +10,18 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import no.ntnu.epsilon_backend.tables.User;
 import javax.inject.Inject;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.sql.DataSource;
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
-import javax.transaction.UserTransaction;
-import javax.ws.rs.FormParam;
 import javax.validation.constraints.NotBlank;
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.FormParam;
@@ -52,7 +42,6 @@ import no.ntnu.epsilon_backend.domain.ImageSend;
 import no.ntnu.epsilon_backend.setup.MailService;
 import no.ntnu.epsilon_backend.tables.AboutUsObject;
 import no.ntnu.epsilon_backend.tables.Faq;
-import no.ntnu.epsilon_backend.tables.Group;
 import no.ntnu.epsilon_backend.tables.Image;
 import no.ntnu.epsilon_backend.tables.NewsfeedObject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -63,6 +52,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
  */
 @Path("/web")
 @Stateless
+//@DeclareRoles(Group.USER)
 public class EpsilonServices {
 
     DataSource ds;
@@ -109,11 +99,11 @@ public class EpsilonServices {
         User user = em.find(User.class, sc.getUserPrincipal().getName());
         return user;
     }
-    
+
     @GET
     @Path("getcalendar")
-    public List<Calendar> getCalendars(){
-        return em.createNamedQuery(Calendar.FIND_ALL_CALENDAR_ITEMS,Calendar.class).getResultList();
+    public List<Calendar> getCalendars() {
+        return em.createNamedQuery(Calendar.FIND_ALL_CALENDAR_ITEMS, Calendar.class).getResultList();
     }
 
     @GET
@@ -188,18 +178,18 @@ public class EpsilonServices {
         return Response.ok(question, MediaType.APPLICATION_JSON).build();
 
     }
-    
+
     @PUT
     @Path("add_calendar_item")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response addCalendarItem(@FormParam("title")String title,
-                                    @FormParam("description")String description,
-                                    @BeanParam LatLng latLng,
-                                    @BeanParam Time startTime,
-                                    @BeanParam Time endTime,
-                                    @FormParam("address")String address){
-        
-        Calendar calendar = new Calendar(title,description,latLng,startTime,endTime,address);
+    public Response addCalendarItem(@FormParam("title") String title,
+            @FormParam("description") String description,
+            @BeanParam LatLng latLng,
+            @BeanParam Time startTime,
+            @BeanParam Time endTime,
+            @FormParam("address") String address) {
+
+        Calendar calendar = new Calendar(title, description, latLng, startTime, endTime, address);
         em.persist(calendar);
         return Response.ok(calendar).build();
     }
@@ -272,8 +262,8 @@ public class EpsilonServices {
             String base64String;
             try {
                 base64String = encodeBase64(i);
-            ImageSend imageSend = new ImageSend(i.getImageId(), base64String, i.getUser());
-            imageSendList.add(imageSend);
+                ImageSend imageSend = new ImageSend(i.getImageId(), base64String, i.getUser());
+                imageSendList.add(imageSend);
             } catch (FileNotFoundException ex) {
                 Logger.getLogger(EpsilonServices.class.getName()).log(Level.SEVERE, null, ex);
                 return Response.status(Response.Status.BAD_REQUEST).build();
@@ -282,7 +272,7 @@ public class EpsilonServices {
         return Response.ok(imageSendList).build();
     }
 
-    private String encodeBase64(Image i) throws FileNotFoundException{
+    private String encodeBase64(Image i) throws FileNotFoundException {
         String base64String = "";
         File file = new File(i.getFilepath());
         try {
