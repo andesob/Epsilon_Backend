@@ -16,6 +16,8 @@ import java.util.Base64;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.security.DeclareRoles;
+import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import no.ntnu.epsilon_backend.tables.User;
 import javax.inject.Inject;
@@ -50,9 +52,9 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
  *
  * @author rojahno
  */
-@Path("/web")
+@Path("web")
 @Stateless
-//@DeclareRoles(Group.USER)
+@DeclareRoles(Group.USER)
 public class EpsilonServices {
 
     DataSource ds;
@@ -90,7 +92,7 @@ public class EpsilonServices {
      */
     @GET
     @Path("users")
-    //@RolesAllowed({Group.USER})
+    @RolesAllowed({Group.USER})
     public List<User> getAllUsers() {
         return em.createNamedQuery(User.FIND_ALL_USERS, User.class).getResultList();
     }

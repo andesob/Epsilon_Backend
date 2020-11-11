@@ -46,11 +46,13 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 import javax.servlet.http.HttpServletResponse;
 import no.ntnu.epsilon_backend.domain.EmailVerificationHash;
 import no.ntnu.epsilon_backend.setup.KeyService;
 import no.ntnu.epsilon_backend.setup.MailService;
+import no.ntnu.epsilon_backend.tables.AboutUsObject;
 import no.ntnu.epsilon_backend.tables.Group;
 import no.ntnu.epsilon_backend.tables.User;
 import org.eclipse.microprofile.jwt.JsonWebToken;
@@ -118,8 +120,16 @@ public class AuthenticationService {
             @QueryParam("email") @NotBlank String email,
             @QueryParam("pwd") @NotBlank String pwd,
             @Context HttpServletRequest request) {
+        User user = null;
+        try {
+            user = em.createNamedQuery(User.FIND_USER_BY_EMAIL, User.class).setParameter("email", email).getSingleResult();
+        } catch (Exception e) {
+        }
 
-        User user = em.createNamedQuery(User.FIND_USER_BY_EMAIL, User.class).setParameter("email", email).getSingleResult();
+        if (user == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+
         CredentialValidationResult result = identityStoreHandler.validate(
                 new UsernamePasswordCredential(user.getUserid(), pwd));
 
@@ -218,12 +228,14 @@ public class AuthenticationService {
     public Response createUser(@FormParam("firstName") String firstName,
             @FormParam("lastName") String lastName,
             @FormParam("pwd") String pwd,
-            @FormParam("email") String email) {
+            @FormParam("email") String email,
+            @FormParam("lastName") String lastName) {
         User user = null;
         try {
             user = em.createNamedQuery(User.FIND_USER_BY_EMAIL, User.class).setParameter("email", email).getSingleResult();
         } catch (Exception e) {
         }
+
         if (user != null) {
             log.log(Level.INFO, "user already exists {0}", email);
             return Response.serverError().entity("Email already in use").build();
@@ -245,6 +257,60 @@ public class AuthenticationService {
 
             mailService.onAsyncVerificationEmail(arrayList);
 
+            return Response.ok(em.merge(user)).build();
+        }
+    }
+
+    @POST
+    @Path("addboardmember")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed(value = {Group.ADMIN})
+    public Response addBoardMember(@FormParam("email") String email) {
+        User user = null;
+        try {
+            user = em.createNamedQuery(User.FIND_USER_BY_EMAIL, User.class).setParameter("email", email).getSingleResult();
+        } catch (Exception e) {
+        }
+
+        if (user == null) {
+            return Response.serverError().entity("Email doesn't exist").build();
+        } else {
+            Group boardGroup = em.find(Group.class, Group.BOARD);
+            user.getGroups().add(boardGroup);
+        }
+        return Response.ok(user).build();
+    }
+
+    @POST
+    @Path("createadminuser")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response createAdminUser(@FormParam("firstName") String firstName,
+            @FormParam("pwd") String pwd,
+            @FormParam("email") String email,
+            @FormParam("lastName") String lastName
+    //@FormParam("position") String position
+    ) {
+        User user = null;
+        try {
+            user = em.createNamedQuery(User.FIND_USER_BY_EMAIL, User.class).setParameter("email", email).getSingleResult();
+        } catch (Exception e) {
+        }
+
+        if (user != null) {
+            log.log(Level.INFO, "adminuser already exists {0}", email);
+            return Response.serverError().entity("Email already in use").build();
+        } else {
+            user = new User();
+            user.setFirstName(firstName);
+            user.setPassword(hasher.generate(pwd.toCharArray()));
+            user.setEmail(email);
+            user.setLastName(lastName);
+            Group admingroup = em.find(Group.class, Group.ADMIN);
+            Group usergroup = em.find(Group.class, Group.USER);
+            user.getGroups().add(usergroup);
+            user.getGroups().add(admingroup);
+            //AboutUsObject aboutUsObject = new AboutUsObject(user, position);
+            //em.merge(aboutUsObject);
             return Response.ok(em.merge(user)).build();
         }
     }

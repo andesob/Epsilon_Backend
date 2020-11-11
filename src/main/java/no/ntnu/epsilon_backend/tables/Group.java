@@ -28,7 +28,8 @@ public class Group implements Serializable {
 
     public static final String USER = "user";
     public static final String ADMIN = "admin";
-    public static final String[] GROUPS = {USER, ADMIN};
+    public static final String BOARD = "board";
+    public static final String[] GROUPS = {USER, ADMIN, BOARD};
 
     @Id
     String name;
