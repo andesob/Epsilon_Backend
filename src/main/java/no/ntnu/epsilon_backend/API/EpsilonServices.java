@@ -44,6 +44,7 @@ import no.ntnu.epsilon_backend.domain.ImageSend;
 import no.ntnu.epsilon_backend.setup.MailService;
 import no.ntnu.epsilon_backend.tables.AboutUsObject;
 import no.ntnu.epsilon_backend.tables.Faq;
+import no.ntnu.epsilon_backend.tables.Group;
 import no.ntnu.epsilon_backend.tables.Image;
 import no.ntnu.epsilon_backend.tables.NewsfeedObject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;

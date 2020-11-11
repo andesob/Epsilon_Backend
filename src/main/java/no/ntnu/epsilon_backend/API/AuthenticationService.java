@@ -46,13 +46,11 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 import javax.servlet.http.HttpServletResponse;
 import no.ntnu.epsilon_backend.domain.EmailVerificationHash;
 import no.ntnu.epsilon_backend.setup.KeyService;
 import no.ntnu.epsilon_backend.setup.MailService;
-import no.ntnu.epsilon_backend.tables.AboutUsObject;
 import no.ntnu.epsilon_backend.tables.Group;
 import no.ntnu.epsilon_backend.tables.User;
 import org.eclipse.microprofile.jwt.JsonWebToken;
@@ -228,8 +226,7 @@ public class AuthenticationService {
     public Response createUser(@FormParam("firstName") String firstName,
             @FormParam("lastName") String lastName,
             @FormParam("pwd") String pwd,
-            @FormParam("email") String email,
-            @FormParam("lastName") String lastName) {
+            @FormParam("email") String email) {
         User user = null;
         try {
             user = em.createNamedQuery(User.FIND_USER_BY_EMAIL, User.class).setParameter("email", email).getSingleResult();
