@@ -44,11 +44,15 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.InvalidKeyException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.Random;
 import java.util.Set;
 import no.ntnu.epsilon_backend.setup.KeyService;
+import no.ntnu.epsilon_backend.setup.MailService;
 import no.ntnu.epsilon_backend.tables.Group;
 import no.ntnu.epsilon_backend.tables.User;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
 /**
@@ -93,6 +97,9 @@ public class AuthenticationService {
     EntityManager em;
 
     @Inject
+    MailService mailService;
+
+    @Inject
     PasswordHash hasher;
 
     @Inject
@@ -111,6 +118,7 @@ public class AuthenticationService {
             @QueryParam("email") @NotBlank String email,
             @QueryParam("pwd") @NotBlank String pwd,
             @Context HttpServletRequest request) {
+
         User user = em.createNamedQuery(User.FIND_USER_BY_EMAIL, User.class).setParameter("email", email).getSingleResult();
         CredentialValidationResult result = identityStoreHandler.validate(
                 new UsernamePasswordCredential(user.getUserid(), pwd));
@@ -125,6 +133,37 @@ public class AuthenticationService {
         } else {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
+    }
+
+    @GET
+    @Path("activateAccount")
+    public Response activateAccount(
+            @QueryParam("key1") @NotBlank String myHash) {
+
+        User user = new User();
+        try {
+            user = em.createNamedQuery(User.FIND_USER_BY_HASH, User.class).setParameter("myHash", myHash).getSingleResult();
+
+        } catch (Exception e) {
+        }
+        if (user != null && !user.getValidated()) {
+            user.setValidated(true);
+
+            try {
+                // URI uri = new URI("/Users/rojahno/NetBeansProjects/Epsilon_Backend/src/main/webapp/index.html");
+                //Response.temporaryRedirect(uri);
+                System.out.println("It worked");
+
+            } catch (Exception e) {
+                e.getMessage();
+            }
+
+        } else {
+            //response.sendRedirect("index.html");
+            System.out.println("It didnt work");
+        }
+
+        return Response.status(Response.Status.ACCEPTED).build();
     }
 
     /**
@@ -176,10 +215,14 @@ public class AuthenticationService {
     @Path("create_user")
     @Produces(MediaType.APPLICATION_JSON)
     public Response createUser(@FormParam("firstName") String firstName,
+            @FormParam("lastName") String lastName,
             @FormParam("pwd") String pwd,
-            @FormParam("email") String email,
-            @FormParam("lastName") String lastName) {
-        User user = em.find(User.class, email);
+            @FormParam("email") String email) {
+        User user = null;
+        try {
+            user = em.createNamedQuery(User.FIND_USER_BY_EMAIL, User.class).setParameter("email", email).getSingleResult();
+        } catch (Exception e) {
+        }
         if (user != null) {
             log.log(Level.INFO, "user already exists {0}", email);
             return Response.serverError().entity("Email already in use").build();
@@ -189,8 +232,22 @@ public class AuthenticationService {
             user.setPassword(hasher.generate(pwd.toCharArray()));
             user.setEmail(email);
             user.setLastName(lastName);
+            user.setValidated(Boolean.FALSE);
             Group usergroup = em.find(Group.class, Group.USER);
             user.getGroups().add(usergroup);
+
+            // Generate Hash Code which helps in creating Activation Link
+            Random theRandom = new Random();
+            theRandom.nextInt(999999);
+            String myHash = DigestUtils.md5Hex("" + theRandom);
+            user.setMyHash(myHash);
+
+            ArrayList arrayList = new ArrayList<String>();
+            arrayList.add(user.getEmail());
+            arrayList.add(user.getMyHash());
+
+            mailService.onAsyncVerificationEmail(arrayList);
+
             return Response.ok(em.merge(user)).build();
         }
     }
@@ -217,7 +274,7 @@ public class AuthenticationService {
             return Response.status(Response.Status.FORBIDDEN).build();
         }
 
-        try ( Connection c = dataSource.getConnection();  PreparedStatement psg = c.prepareStatement(INSERT_USERGROUP)) {
+        try (Connection c = dataSource.getConnection(); PreparedStatement psg = c.prepareStatement(INSERT_USERGROUP)) {
             psg.setString(1, role);
             psg.setString(2, uid);
             psg.executeUpdate();
@@ -263,7 +320,7 @@ public class AuthenticationService {
             return Response.status(Response.Status.FORBIDDEN).build();
         }
 
-        try ( Connection c = dataSource.getConnection();  PreparedStatement psg = c.prepareStatement(DELETE_USERGROUP)) {
+        try (Connection c = dataSource.getConnection(); PreparedStatement psg = c.prepareStatement(DELETE_USERGROUP)) {
             psg.setString(1, role);
             psg.setString(2, uid);
             psg.executeUpdate();
