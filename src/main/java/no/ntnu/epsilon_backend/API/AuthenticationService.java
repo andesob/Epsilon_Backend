@@ -215,11 +215,12 @@ public class AuthenticationService {
     @Path("addboardmember")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed(value = {Group.ADMIN})
-    public Response addBoardMember(@FormParam("email") String email) {
+    public Response addBoardMember(@FormParam("email") String email, @FormParam("position") String position) {
         User user = null;
         try {
             user = em.createNamedQuery(User.FIND_USER_BY_EMAIL, User.class).setParameter("email", email).getSingleResult();
         } catch (Exception e) {
+            e.printStackTrace();
         }
 
         if (user == null) {
@@ -227,8 +228,14 @@ public class AuthenticationService {
         } else {
             Group boardGroup = em.find(Group.class, Group.BOARD);
             user.getGroups().add(boardGroup);
+            System.out.println("BOARDGROUP: " + boardGroup);
+            for (Group group : user.getGroups()) {
+                System.out.println("ALLGROUPS: " + group.getName());
+            }
+            AboutUsObject aboutUsObject = new AboutUsObject(user, position);
+            em.persist(aboutUsObject);
         }
-        return Response.ok(user).build();
+        return Response.ok(em.merge(user)).build();
     }
 
     @POST
@@ -238,7 +245,6 @@ public class AuthenticationService {
             @FormParam("pwd") String pwd,
             @FormParam("email") String email,
             @FormParam("lastName") String lastName
-    //@FormParam("position") String position
     ) {
         User user = null;
         try {
@@ -259,8 +265,6 @@ public class AuthenticationService {
             Group usergroup = em.find(Group.class, Group.USER);
             user.getGroups().add(usergroup);
             user.getGroups().add(admingroup);
-            //AboutUsObject aboutUsObject = new AboutUsObject(user, position);
-            //em.merge(aboutUsObject);
             return Response.ok(em.merge(user)).build();
         }
     }
