@@ -46,7 +46,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import no.ntnu.epsilon_backend.API.AuthenticationService;
-import no.ntnu.epsilon_backend.domain.LatLng;
+import no.ntnu.epsilon_backend.domain.LatitudeLongitude;
 import no.ntnu.epsilon_backend.domain.Time;
 import no.ntnu.epsilon_backend.tables.Calendar;
 import no.ntnu.epsilon_backend.domain.ImageSend;
@@ -193,16 +193,15 @@ public class EpsilonServices {
 
     @PUT
     @Path("add_calendar_item")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response addCalendarItem(@FormParam("title") String title,
-            @FormParam("description") String description,
-            @BeanParam LatLng latLng,
-            @BeanParam Time startTime,
-            @BeanParam Time endTime,
-            @FormParam("address") String address) {
-
-        Calendar calendar = new Calendar(title, description, latLng, startTime, endTime, address);
-        em.persist(calendar);
+    public Response addCalendarItem(@FormParam ("title") String title,
+                                    @FormParam ("description") String description,
+                                    @FormParam ("latlng") String latLng,
+                                    @FormParam ("starttime") String startTime,
+                                    @FormParam ("endtime") String endTime,
+                                    @FormParam ("address") String address){
+        
+        Calendar calendar = new Calendar(title,description,latLng,startTime,endTime,address);
+        em.merge(calendar);
         return Response.ok(calendar).build();
     }
 

@@ -6,17 +6,20 @@
 package no.ntnu.epsilon_backend.domain;
 
 import java.io.Serializable;
+import javax.inject.Inject;
 
 /**
  *
  * @author eskil
  */
-public class LatLng implements Serializable {
+public class LatitudeLongitude implements Serializable {
     
     private double latitude;
     private double longitude;
     
-    public LatLng(double latitude,double longitude){
+    public LatitudeLongitude(){}
+
+    public LatitudeLongitude(double latitude,double longitude){
         this.latitude = latitude;
         this.longitude = longitude;
     }

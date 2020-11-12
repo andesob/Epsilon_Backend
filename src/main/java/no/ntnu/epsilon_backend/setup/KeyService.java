@@ -94,7 +94,7 @@ public class KeyService {
         result.append("-----BEGIN PUBLIC KEY-----\n");
         result.append(key);
         result.append("\n-----END PUBLIC KEY-----");
-
+ 
         return Response.ok(result.toString()).build();
     }
 

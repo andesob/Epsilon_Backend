@@ -7,11 +7,13 @@ package no.ntnu.epsilon_backend.domain;
 
 import java.io.Serializable;
 import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 
 /**
  *
  * @author eskil
  */
+@NoArgsConstructor
 @AllArgsConstructor
 public class Time implements Serializable {
     private String year;
