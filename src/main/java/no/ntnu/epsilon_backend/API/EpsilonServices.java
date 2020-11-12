@@ -147,13 +147,15 @@ public class EpsilonServices {
         Faq faq = em.find(Faq.class, id);
         faq.setQuestion(question);
         faq.setAnswer(answer);
+        em.persist(faq);
+        em.flush();
 
         return Response.ok().build();
     }
 
 
     /*
-    @return all faqs
+    @return
      */
     @PUT
     @Path("add_faqs")
@@ -167,6 +169,18 @@ public class EpsilonServices {
         faq.setQuestion(question);
         return Response.ok(em.merge(faq)).build();
     }
+
+    @PUT
+    @Path("delete_faq")
+    @Produces(MediaType.APPLICATION_JSON)
+    //@RolesAllowed({Group.ADMIN})
+    public Response deleteFaq(
+            @FormParam("id") long faqId) {
+        Faq faq = em.find(Faq.class, faqId);
+        em.remove(faq);
+        return Response.ok().build();
+    }
+
 
     /*
     @return all faqs
@@ -277,8 +291,9 @@ public class EpsilonServices {
 
     private String encodeBase64(Image i) throws FileNotFoundException {
         String base64String = "";
-        File file = new File(i.getFilepath());
+
         try {
+            File file = new File(i.getFilepath());
             FileInputStream fileInputStream = new FileInputStream(file);
             byte[] imageData = new byte[(int) file.length()];
             fileInputStream.read(imageData);
