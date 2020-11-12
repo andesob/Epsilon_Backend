@@ -130,30 +130,26 @@ public class AuthenticationService {
             String token = issueToken(result.getCallerPrincipal().getName(),
                     result.getCallerGroups(), request);
             return Response
-                    .ok(token)
+                    .ok(user)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                     .build();
         } else {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
     }
+
     @GET
     @Path("verify")
     @RolesAllowed({Group.USER})
-    public Response verifyJwt(){
-        //System.out.println(em.createNamedQuery(User.FIND_USER_BY_IDS,User.class).setParameter("userid",principal.getName()).getResultList());
-        //if(em.createNamedQuery(User.FIND_USER_BY_IDS,User.class).setParameter("ids",principal.getName()).getResultList().isEmpty()){
-            //return Response.ok().build();
-        //}else{
-            //return Response.ok().build();
-        //}
-        if(em.createNamedQuery(User.FIND_USER_BY_ID,User.class).setParameter("id", principal.getName()).getSingleResult().getUserid().equals(principal.getName())){
-        return Response.ok().build();
-    }
-        else{
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response verifyJwt() {
+        User user = em.createNamedQuery(User.FIND_USER_BY_ID, User.class).setParameter("id", principal.getName()).getSingleResult();
+        if (user != null) {
+            return Response.ok(user).build();
+        } else {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
-            
+
     }
 
     /**

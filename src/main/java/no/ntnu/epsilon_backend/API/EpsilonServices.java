@@ -102,7 +102,7 @@ public class EpsilonServices {
      */
     @GET
     @Path("users")
-    @RolesAllowed({Group.USER})
+    //@RolesAllowed({Group.USER})
     public List<User> getAllUsers() {
         return em.createNamedQuery(User.FIND_ALL_USERS, User.class).getResultList();
     }
@@ -193,14 +193,14 @@ public class EpsilonServices {
 
     @PUT
     @Path("add_calendar_item")
-    public Response addCalendarItem(@FormParam ("title") String title,
-                                    @FormParam ("description") String description,
-                                    @FormParam ("latlng") String latLng,
-                                    @FormParam ("starttime") String startTime,
-                                    @FormParam ("endtime") String endTime,
-                                    @FormParam ("address") String address){
-        
-        Calendar calendar = new Calendar(title,description,latLng,startTime,endTime,address);
+    public Response addCalendarItem(@FormParam("title") String title,
+            @FormParam("description") String description,
+            @FormParam("latlng") String latLng,
+            @FormParam("starttime") String startTime,
+            @FormParam("endtime") String endTime,
+            @FormParam("address") String address) {
+
+        Calendar calendar = new Calendar(title, description, latLng, startTime, endTime, address);
         em.merge(calendar);
         return Response.ok(calendar).build();
     }
