@@ -160,6 +160,7 @@ public class EpsilonServices {
     @PUT
     @Path("add_faqs")
     @Produces(MediaType.APPLICATION_JSON)
+
     //@RolesAllowed({Group.ADMIN})
     public Response addFaq(
             @FormParam("question") @NotBlank String question,
@@ -167,7 +168,12 @@ public class EpsilonServices {
         Faq faq = new Faq();
         faq.setAnswer(answer);
         faq.setQuestion(question);
-        return Response.ok(em.merge(faq)).build();
+        em.persist(faq);
+
+        if (em.find(Faq.class, faq.getQuestionId()) == null) {
+            return Response.status(Response.Status.CREATED).entity(faq).build();
+        }
+        return Response.status(Response.Status.BAD_REQUEST).build();
     }
 
     @PUT
@@ -176,9 +182,14 @@ public class EpsilonServices {
     //@RolesAllowed({Group.ADMIN})
     public Response deleteFaq(
             @FormParam("id") long faqId) {
+
         Faq faq = em.find(Faq.class, faqId);
-        em.remove(faq);
-        return Response.ok().build();
+
+        if (faq != null) {
+            em.remove(faq);
+            return Response.status(Response.Status.OK).entity(faq).build();
+        }
+        return Response.status(Response.Status.BAD_REQUEST).build();
     }
 
 
@@ -190,10 +201,8 @@ public class EpsilonServices {
     //@RolesAllowed({Group.USER})
     public Response askQuestion(@FormParam("question")
             @NotBlank String question) {
-
         mailService.onAsyncMessage(question);
-        return Response.ok(question, MediaType.APPLICATION_JSON).build();
-
+        return Response.status(Response.Status.ACCEPTED).entity(question).build();
     }
 
     @PUT
