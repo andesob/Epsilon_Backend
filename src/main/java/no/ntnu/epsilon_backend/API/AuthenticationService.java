@@ -140,7 +140,7 @@ public class AuthenticationService {
 
     @GET
     @Path("verify")
-    @RolesAllowed({Group.USER})
+    @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
     @Produces(MediaType.APPLICATION_JSON)
     public Response verifyJwt() {
         User user = em.createNamedQuery(User.FIND_USER_BY_ID, User.class).setParameter("id", principal.getName()).getSingleResult();
@@ -228,7 +228,7 @@ public class AuthenticationService {
     @POST
     @Path("addboardmember")
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed(value = {Group.ADMIN})
+    @RolesAllowed({Group.ADMIN, Group.BOARD})
     public Response addBoardMember(@FormParam("email") String email, @FormParam("position") String position) {
         User user = null;
         try {
@@ -254,6 +254,7 @@ public class AuthenticationService {
 
     @POST
     @Path("createadminuser")
+    @RolesAllowed({Group.ADMIN})
     @Produces(MediaType.APPLICATION_JSON)
     public Response createAdminUser(@FormParam("firstName") String firstName,
             @FormParam("pwd") String pwd,
@@ -285,7 +286,7 @@ public class AuthenticationService {
 
     @GET
     @Path("currentuser")
-    @RolesAllowed(value = {Group.USER})
+    @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
     @Produces(MediaType.APPLICATION_JSON)
     public User getCurrentUser() {
         return em.find(User.class, principal.getName());
@@ -299,7 +300,7 @@ public class AuthenticationService {
      */
     @PUT
     @Path("addrole")
-    @RolesAllowed(value = {Group.ADMIN})
+    @RolesAllowed({Group.ADMIN})
     public Response addRole(@QueryParam("uid") String uid, @QueryParam("role") String role) {
         if (!roleExists(role)) {
             return Response.status(Response.Status.FORBIDDEN).build();
@@ -345,7 +346,7 @@ public class AuthenticationService {
      */
     @PUT
     @Path("removerole")
-    @RolesAllowed(value = {Group.ADMIN})
+    @RolesAllowed({Group.ADMIN})
     public Response removeRole(@QueryParam("uid") String uid, @QueryParam("role") String role) {
         if (!roleExists(role)) {
             return Response.status(Response.Status.FORBIDDEN).build();
@@ -372,7 +373,7 @@ public class AuthenticationService {
      */
     @PUT
     @Path("changepassword")
-    @RolesAllowed(value = {Group.USER})
+    @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
     public Response changePassword(@QueryParam("uid") String uid,
             @QueryParam("pwd") String password,
             @Context SecurityContext sc) {
