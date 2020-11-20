@@ -44,11 +44,13 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.InvalidKeyException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
+import javax.servlet.http.HttpServletResponse;
+import no.ntnu.epsilon_backend.domain.EmailVerificationHash;
 import no.ntnu.epsilon_backend.setup.KeyService;
-import no.ntnu.epsilon_backend.tables.AboutUsObject;
+import no.ntnu.epsilon_backend.setup.MailService;
 import no.ntnu.epsilon_backend.tables.Group;
 import no.ntnu.epsilon_backend.tables.User;
 import org.eclipse.microprofile.jwt.JsonWebToken;
@@ -93,6 +95,9 @@ public class AuthenticationService {
      */
     @PersistenceContext
     EntityManager em;
+
+    @Inject
+    MailService mailService;
 
     @Inject
     PasswordHash hasher;
@@ -152,6 +157,38 @@ public class AuthenticationService {
 
     }
 
+    @GET
+    @Path("activateAccount")
+    public Response activateAccount(
+            @Context HttpServletRequest request, @Context HttpServletResponse response) {
+
+        User user = null;
+        String emailHash = request.getParameter("key1");
+        try {
+            user = em.createNamedQuery(User.FIND_USER_BY_HASH, User.class).setParameter("emailHash", emailHash).getSingleResult();
+
+            EmailVerificationHash hash = user.getEmailVerificationHash();
+
+            if (System.currentTimeMillis() > hash.getTimeWhenExpired()) {
+                return Response.status(Response.Status.GONE).build();
+            }
+
+            if (user != null && !user.getValidated()) {
+                user.setValidated(true);
+                System.out.println("It worked");
+                response.sendRedirect("../../Success.jsp");
+
+            } else {
+                response.sendRedirect("../../Failure.jsp");
+                System.out.println("It didnt work");
+            }
+        } catch (Exception e) {
+            e.getMessage();
+        }
+        return Response.status(Response.Status.OK).build();
+
+    }
+
     /**
      *
      * @param name
@@ -201,9 +238,9 @@ public class AuthenticationService {
     @Path("create_user")
     @Produces(MediaType.APPLICATION_JSON)
     public Response createUser(@FormParam("firstName") String firstName,
+            @FormParam("lastName") String lastName,
             @FormParam("pwd") String pwd,
-            @FormParam("email") String email,
-            @FormParam("lastName") String lastName) {
+            @FormParam("email") String email) {
         User user = null;
         try {
             user = em.createNamedQuery(User.FIND_USER_BY_EMAIL, User.class).setParameter("email", email).getSingleResult();
@@ -219,8 +256,18 @@ public class AuthenticationService {
             user.setPassword(hasher.generate(pwd.toCharArray()));
             user.setEmail(email);
             user.setLastName(lastName);
+            user.setValidated(Boolean.FALSE);
             Group usergroup = em.find(Group.class, Group.USER);
             user.getGroups().add(usergroup);
+            user.setEmailVerificationHash(new EmailVerificationHash());
+            user.setEmailHash(user.getEmailVerificationHash().getHash());
+
+            ArrayList arrayList = new ArrayList<String>();
+            arrayList.add(user.getEmail());
+            arrayList.add(user.getEmailVerificationHash().getHash());
+
+            mailService.onAsyncVerificationEmail(arrayList);
+
             return Response.ok(em.merge(user)).build();
         }
     }
@@ -306,7 +353,7 @@ public class AuthenticationService {
             return Response.status(Response.Status.FORBIDDEN).build();
         }
 
-        try ( Connection c = dataSource.getConnection();  PreparedStatement psg = c.prepareStatement(INSERT_USERGROUP)) {
+        try (Connection c = dataSource.getConnection(); PreparedStatement psg = c.prepareStatement(INSERT_USERGROUP)) {
             psg.setString(1, role);
             psg.setString(2, uid);
             psg.executeUpdate();
@@ -352,7 +399,7 @@ public class AuthenticationService {
             return Response.status(Response.Status.FORBIDDEN).build();
         }
 
-        try ( Connection c = dataSource.getConnection();  PreparedStatement psg = c.prepareStatement(DELETE_USERGROUP)) {
+        try (Connection c = dataSource.getConnection(); PreparedStatement psg = c.prepareStatement(DELETE_USERGROUP)) {
             psg.setString(1, role);
             psg.setString(2, uid);
             psg.executeUpdate();

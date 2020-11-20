@@ -10,10 +10,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -24,15 +21,9 @@ import javax.annotation.security.RolesAllowed;
 import javax.ejb.Stateless;
 import no.ntnu.epsilon_backend.tables.User;
 import javax.inject.Inject;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.sql.DataSource;
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
-import javax.transaction.UserTransaction;
-import javax.ws.rs.FormParam;
 import javax.validation.constraints.NotBlank;
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.FormParam;
@@ -158,13 +149,15 @@ public class EpsilonServices {
         Faq faq = em.find(Faq.class, id);
         faq.setQuestion(question);
         faq.setAnswer(answer);
+        em.persist(faq);
+        em.flush();
 
         return Response.ok().build();
     }
 
 
     /*
-    @return all faqs
+    @return
      */
     @PUT
     @Path("add_faqs")
@@ -176,8 +169,30 @@ public class EpsilonServices {
         Faq faq = new Faq();
         faq.setAnswer(answer);
         faq.setQuestion(question);
-        return Response.ok(em.merge(faq)).build();
+        em.persist(faq);
+
+        if (em.find(Faq.class, faq.getQuestionId()) == null) {
+            return Response.status(Response.Status.CREATED).entity(faq).build();
+        }
+        return Response.status(Response.Status.BAD_REQUEST).build();
     }
+
+    @PUT
+    @Path("delete_faq")
+    @Produces(MediaType.APPLICATION_JSON)
+    //@RolesAllowed({Group.ADMIN})
+    public Response deleteFaq(
+            @FormParam("id") long faqId) {
+
+        Faq faq = em.find(Faq.class, faqId);
+
+        if (faq != null) {
+            em.remove(faq);
+            return Response.status(Response.Status.OK).entity(faq).build();
+        }
+        return Response.status(Response.Status.BAD_REQUEST).build();
+    }
+
 
     /*
     @return all faqs
@@ -187,10 +202,8 @@ public class EpsilonServices {
     @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
     public Response askQuestion(@FormParam("question")
             @NotBlank String question) {
-
         mailService.onAsyncMessage(question);
-        return Response.ok(question, MediaType.APPLICATION_JSON).build();
-
+        return Response.status(Response.Status.ACCEPTED).entity(question).build();
     }
 
     @PUT
@@ -289,8 +302,9 @@ public class EpsilonServices {
 
     private String encodeBase64(Image i) throws FileNotFoundException {
         String base64String = "";
-        File file = new File(i.getFilepath());
+
         try {
+            File file = new File(i.getFilepath());
             FileInputStream fileInputStream = new FileInputStream(file);
             byte[] imageData = new byte[(int) file.length()];
             fileInputStream.read(imageData);
