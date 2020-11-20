@@ -37,7 +37,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import no.ntnu.epsilon_backend.API.AuthenticationService;
-import no.ntnu.epsilon_backend.domain.LatLng;
+import no.ntnu.epsilon_backend.domain.LatitudeLongitude;
 import no.ntnu.epsilon_backend.domain.Time;
 import no.ntnu.epsilon_backend.tables.Calendar;
 import no.ntnu.epsilon_backend.domain.ImageSend;
@@ -93,7 +93,7 @@ public class EpsilonServices {
      */
     @GET
     @Path("users")
-    @RolesAllowed({Group.USER})
+    @RolesAllowed({Group.ADMIN, Group.BOARD})
     public List<User> getAllUsers() {
         return em.createNamedQuery(User.FIND_ALL_USERS, User.class).getResultList();
     }
@@ -105,6 +105,7 @@ public class EpsilonServices {
 
     @GET
     @Path("getcalendar")
+    @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
     public List<Calendar> getCalendars() {
         return em.createNamedQuery(Calendar.FIND_ALL_CALENDAR_ITEMS, Calendar.class).getResultList();
     }
@@ -112,13 +113,14 @@ public class EpsilonServices {
     @GET
     @Path("newsfeed")
     @Produces(MediaType.APPLICATION_JSON)
-    //@RolesAllowed({Group.USER})
+    @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
     public List<NewsfeedObject> getAllNewsfeedObjects() {
         return em.createNamedQuery(NewsfeedObject.FIND_ALL_NEWSFEEDOBJECTS, NewsfeedObject.class).getResultList();
     }
 
     @PUT
     @Path("postNews")
+    @RolesAllowed({Group.ADMIN, Group.BOARD})
     public Response postNewsfeedObject(@FormParam("title") String title,
             @FormParam("content") String content) {
         NewsfeedObject news = new NewsfeedObject(title, content, LocalDateTime.now(), LocalDateTime.now());
@@ -131,7 +133,7 @@ public class EpsilonServices {
      */
     @GET
     @Path("get_faqs")
-    //@RolesAllowed({Group.USER})
+    @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
     public List<Faq> getAllFaqs() {
         return em.createNamedQuery(Faq.FIND_ALL_FAQS, Faq.class).getResultList();
     }
@@ -141,7 +143,7 @@ public class EpsilonServices {
      */
     @POST
     @Path("edit_faq")
-    //@RolesAllowed({Group.Admin})
+    @RolesAllowed({Group.ADMIN, Group.BOARD})
     public Response editFaqs(@FormParam("question") String question, @FormParam("answer") String answer, @FormParam("questionId") long id) {
 
         Faq faq = em.find(Faq.class, id);
@@ -160,8 +162,7 @@ public class EpsilonServices {
     @PUT
     @Path("add_faqs")
     @Produces(MediaType.APPLICATION_JSON)
-
-    //@RolesAllowed({Group.ADMIN})
+    @RolesAllowed({Group.ADMIN, Group.BOARD})
     public Response addFaq(
             @FormParam("question") @NotBlank String question,
             @FormParam("answer") @NotBlank String answer) {
@@ -198,7 +199,7 @@ public class EpsilonServices {
      */
     @POST
     @Path("ask_question")
-    //@RolesAllowed({Group.USER})
+    @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
     public Response askQuestion(@FormParam("question")
             @NotBlank String question) {
         mailService.onAsyncMessage(question);
@@ -207,21 +208,22 @@ public class EpsilonServices {
 
     @PUT
     @Path("add_calendar_item")
-    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({Group.ADMIN, Group.BOARD})
     public Response addCalendarItem(@FormParam("title") String title,
             @FormParam("description") String description,
-            @BeanParam LatLng latLng,
-            @BeanParam Time startTime,
-            @BeanParam Time endTime,
+            @FormParam("latlng") String latLng,
+            @FormParam("starttime") String startTime,
+            @FormParam("endtime") String endTime,
             @FormParam("address") String address) {
 
         Calendar calendar = new Calendar(title, description, latLng, startTime, endTime, address);
-        em.persist(calendar);
+        em.merge(calendar);
         return Response.ok(calendar).build();
     }
 
     @POST
     @Path("addAboutUsObject")
+    @RolesAllowed({Group.ADMIN, Group.BOARD})
     public Response addAboutUsObject(@FormParam("position") String position, @FormParam("userid") String userid) {
         User user = em.find(User.class, userid);
 
@@ -233,6 +235,7 @@ public class EpsilonServices {
 
     @GET
     @Path("getAboutUsObjects")
+    @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
     public Response getAboutUsObjects() {
         return Response.ok(em.createNamedQuery(AboutUsObject.FIND_ALL_ABOUT_US_OBJECTS).getResultList()).build();
     }
@@ -240,10 +243,8 @@ public class EpsilonServices {
     //TODO: Change filepath so it matches an ubuntu server instead of windows specific filesystem.
     @POST
     @Path("uploadPictureAsString")
+    @RolesAllowed({Group.ADMIN, Group.BOARD})
     public Response uploadPictureAsString(@FormParam("base64String") String base64String, @FormParam("userId") String userId, @FormParam("filename") String filename) {
-
-        //byte[] decodedString = android.util.Base64.decode(imageString, android.util.Base64.DEFAULT);
-        //Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
         byte[] decodedString = Base64.getMimeDecoder().decode(base64String);
         String filepath = "/C:/Dataingenior/" + filename;
 
@@ -259,22 +260,23 @@ public class EpsilonServices {
         }
 
         User user = em.find(User.class, userId);
+        deletePictureIfExists(userId);
         Image image = new Image(filepath, user);
         em.persist(image);
         ImageSend imageSend = new ImageSend(image.getImageId(), base64String, image.getUser());
         return Response.ok(imageSend).build();
     }
 
-    @POST
-    @Path("deletePicture")
-    public Response deletePicture(@FormParam("pictureId") String pictureId) {
-        long imageId = Long.valueOf(pictureId);
+    private void deletePictureIfExists(String userid) {
         Image image = null;
-        image = em.find(Image.class, imageId);
+        try {
+            image = em.createNamedQuery(Image.FIND_IMAGE_BY_USERID, Image.class).setParameter("uid", userid).getSingleResult();
+        } catch (Exception e) {
+        }
+
         if (image != null) {
             em.remove(image);
         }
-        return Response.ok(image).build();
     }
 
     @GET

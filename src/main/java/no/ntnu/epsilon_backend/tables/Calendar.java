@@ -7,6 +7,7 @@ package no.ntnu.epsilon_backend.tables;
 
 import java.io.Serializable;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.NamedQuery;
 import javax.persistence.Table;
@@ -14,7 +15,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Generated;
 import lombok.NoArgsConstructor;
-import no.ntnu.epsilon_backend.domain.LatLng;
+import no.ntnu.epsilon_backend.domain.LatitudeLongitude;
 import no.ntnu.epsilon_backend.domain.Time;
 import static no.ntnu.epsilon_backend.tables.Calendar.FIND_ALL_CALENDAR_ITEMS;
 
@@ -34,19 +35,20 @@ public class Calendar implements Serializable{
         public static final String FIND_ALL_CALENDAR_ITEMS = "Calendar.findAllCalendarItems";
 
     @Id
-    @Generated
-    Long id;
+    @GeneratedValue
+    long id;
+    
     String title;
     String description;
     
-    LatLng latLng;
+    String latLng;
     
-    Time startTime;   
-    Time endTime;  
+    String startTime;   
+    String endTime;  
     
     String address;
     
-    public Calendar(String title, String description, LatLng latLng, Time startTime, Time endTime, String address) {
+    public Calendar(String title, String description, String latLng, String startTime, String endTime, String address) {
         this.title = title;
         this.description = description;
         this.latLng = latLng;

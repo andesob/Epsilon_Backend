@@ -135,12 +135,26 @@ public class AuthenticationService {
             String token = issueToken(result.getCallerPrincipal().getName(),
                     result.getCallerGroups(), request);
             return Response
-                    .ok(token)
+                    .ok(user)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                     .build();
         } else {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
+    }
+
+    @GET
+    @Path("verify")
+    @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response verifyJwt() {
+        User user = em.createNamedQuery(User.FIND_USER_BY_ID, User.class).setParameter("id", principal.getName()).getSingleResult();
+        if (user != null) {
+            return Response.ok(user).build();
+        } else {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+
     }
 
     @GET
@@ -261,12 +275,13 @@ public class AuthenticationService {
     @POST
     @Path("addboardmember")
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed(value = {Group.ADMIN})
-    public Response addBoardMember(@FormParam("email") String email) {
+    @RolesAllowed({Group.ADMIN, Group.BOARD})
+    public Response addBoardMember(@FormParam("email") String email, @FormParam("position") String position) {
         User user = null;
         try {
             user = em.createNamedQuery(User.FIND_USER_BY_EMAIL, User.class).setParameter("email", email).getSingleResult();
         } catch (Exception e) {
+            e.printStackTrace();
         }
 
         if (user == null) {
@@ -274,18 +289,24 @@ public class AuthenticationService {
         } else {
             Group boardGroup = em.find(Group.class, Group.BOARD);
             user.getGroups().add(boardGroup);
+            System.out.println("BOARDGROUP: " + boardGroup);
+            for (Group group : user.getGroups()) {
+                System.out.println("ALLGROUPS: " + group.getName());
+            }
+            AboutUsObject aboutUsObject = new AboutUsObject(user, position);
+            em.persist(aboutUsObject);
         }
-        return Response.ok(user).build();
+        return Response.ok(em.merge(user)).build();
     }
 
     @POST
     @Path("createadminuser")
+    @RolesAllowed({Group.ADMIN})
     @Produces(MediaType.APPLICATION_JSON)
     public Response createAdminUser(@FormParam("firstName") String firstName,
             @FormParam("pwd") String pwd,
             @FormParam("email") String email,
             @FormParam("lastName") String lastName
-    //@FormParam("position") String position
     ) {
         User user = null;
         try {
@@ -306,15 +327,13 @@ public class AuthenticationService {
             Group usergroup = em.find(Group.class, Group.USER);
             user.getGroups().add(usergroup);
             user.getGroups().add(admingroup);
-            //AboutUsObject aboutUsObject = new AboutUsObject(user, position);
-            //em.merge(aboutUsObject);
             return Response.ok(em.merge(user)).build();
         }
     }
 
     @GET
     @Path("currentuser")
-    @RolesAllowed(value = {Group.USER})
+    @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
     @Produces(MediaType.APPLICATION_JSON)
     public User getCurrentUser() {
         return em.find(User.class, principal.getName());
@@ -328,7 +347,7 @@ public class AuthenticationService {
      */
     @PUT
     @Path("addrole")
-    @RolesAllowed(value = {Group.ADMIN})
+    @RolesAllowed({Group.ADMIN})
     public Response addRole(@QueryParam("uid") String uid, @QueryParam("role") String role) {
         if (!roleExists(role)) {
             return Response.status(Response.Status.FORBIDDEN).build();
@@ -374,7 +393,7 @@ public class AuthenticationService {
      */
     @PUT
     @Path("removerole")
-    @RolesAllowed(value = {Group.ADMIN})
+    @RolesAllowed({Group.ADMIN})
     public Response removeRole(@QueryParam("uid") String uid, @QueryParam("role") String role) {
         if (!roleExists(role)) {
             return Response.status(Response.Status.FORBIDDEN).build();
@@ -401,7 +420,7 @@ public class AuthenticationService {
      */
     @PUT
     @Path("changepassword")
-    @RolesAllowed(value = {Group.USER})
+    @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
     public Response changePassword(@QueryParam("uid") String uid,
             @QueryParam("pwd") String password,
             @Context SecurityContext sc) {

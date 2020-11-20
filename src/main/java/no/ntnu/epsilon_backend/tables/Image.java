@@ -17,6 +17,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import static no.ntnu.epsilon_backend.tables.Image.FIND_ALL_IMAGES;
 import static no.ntnu.epsilon_backend.tables.Image.FIND_IMAGE_BY_ID;
+import static no.ntnu.epsilon_backend.tables.Image.FIND_IMAGE_BY_USERID;
 
 /**
  *
@@ -29,12 +30,15 @@ import static no.ntnu.epsilon_backend.tables.Image.FIND_IMAGE_BY_ID;
 @NamedQueries({
     @NamedQuery(name = FIND_ALL_IMAGES, query = "select i from Image i order by i.imageId"),
     @NamedQuery(name = FIND_IMAGE_BY_ID, query = "select i from Image i "
-            + "where i.imageId = :id")
+            + "where i.imageId = :id"),
+    @NamedQuery(name = FIND_IMAGE_BY_USERID, query = "select i from Image i "
+            + "where i.user.userid = :uid")
 })
 public class Image implements Serializable {
 
     public static final String FIND_ALL_IMAGES = "Image.findAllImages";
     public static final String FIND_IMAGE_BY_ID = "Image.findById";
+    public static final String FIND_IMAGE_BY_USERID = "Image.findByUserid";
 
     @Id
     @GeneratedValue

@@ -28,6 +28,7 @@ import lombok.NoArgsConstructor;
 import no.ntnu.epsilon_backend.domain.EmailVerificationHash;
 import static no.ntnu.epsilon_backend.tables.User.FIND_ALL_USERS;
 import static no.ntnu.epsilon_backend.tables.User.FIND_USER_BY_EMAIL;
+import static no.ntnu.epsilon_backend.tables.User.FIND_USER_BY_ID;
 import static no.ntnu.epsilon_backend.tables.User.FIND_USER_BY_HASH;
 import static no.ntnu.epsilon_backend.tables.User.FIND_USER_BY_IDS;
 
@@ -43,6 +44,7 @@ import static no.ntnu.epsilon_backend.tables.User.FIND_USER_BY_IDS;
 @NamedQuery(name = FIND_ALL_USERS, query = "select u from User u order by u.firstName")
 @NamedQuery(name = FIND_USER_BY_IDS, query = "select u from User u where u.userid in :ids")
 @NamedQuery(name = FIND_USER_BY_EMAIL, query = "select u from User u where u.email = :email")
+@NamedQuery(name = FIND_USER_BY_ID, query = "select u from User u where u.userid like :id")
 @NamedQuery(name = FIND_USER_BY_HASH, query = "select u from User u where u.emailHash = :emailHash")
 @NoArgsConstructor
 public class User implements Serializable {
@@ -50,6 +52,7 @@ public class User implements Serializable {
     public static final String FIND_USER_BY_IDS = "User.findUserByIds";
     public static final String FIND_ALL_USERS = "User.findAllUsers";
     public static final String FIND_USER_BY_EMAIL = "User.findUserByEmail";
+    public static final String FIND_USER_BY_ID = "User.findUserById";
     public static final String FIND_USER_BY_HASH = "User.findUserByHash";
 
     public enum State {
