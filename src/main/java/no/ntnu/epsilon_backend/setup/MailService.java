@@ -58,7 +58,7 @@ public class MailService {
             MimeMessage mimeMessage = new MimeMessage(mailSession);
             mimeMessage.setSubject("New Message");
 
-            String reciever = "andrersu@ntnu.no";
+            String reciever = "andrersu@stud.ntnu.no";
             if (reciever != null && reciever.length() > 0) {
                 mimeMessage.setRecipient(MimeMessage.RecipientType.TO, new InternetAddress(reciever));
                 mimeMessage.setFrom(new InternetAddress(smtpUser));

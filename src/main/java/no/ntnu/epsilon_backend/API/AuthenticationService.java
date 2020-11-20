@@ -51,6 +51,7 @@ import javax.servlet.http.HttpServletResponse;
 import no.ntnu.epsilon_backend.domain.EmailVerificationHash;
 import no.ntnu.epsilon_backend.setup.KeyService;
 import no.ntnu.epsilon_backend.setup.MailService;
+import no.ntnu.epsilon_backend.tables.AboutUsObject;
 import no.ntnu.epsilon_backend.tables.Group;
 import no.ntnu.epsilon_backend.tables.User;
 import org.eclipse.microprofile.jwt.JsonWebToken;
@@ -126,12 +127,15 @@ public class AuthenticationService {
 
         if (user == null) {
             return Response.status(Response.Status.UNAUTHORIZED).build();
+        } else if (!user.getValidated()) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
         }
 
         CredentialValidationResult result = identityStoreHandler.validate(
                 new UsernamePasswordCredential(user.getUserid(), pwd));
 
         if (result.getStatus() == CredentialValidationResult.Status.VALID) {
+
             String token = issueToken(result.getCallerPrincipal().getName(),
                     result.getCallerGroups(), request);
             return Response
@@ -154,7 +158,6 @@ public class AuthenticationService {
         } else {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
-
     }
 
     @GET
@@ -175,18 +178,14 @@ public class AuthenticationService {
 
             if (user != null && !user.getValidated()) {
                 user.setValidated(true);
-                System.out.println("It worked");
                 response.sendRedirect("../../Success.jsp");
-
             } else {
                 response.sendRedirect("../../Failure.jsp");
-                System.out.println("It didnt work");
             }
         } catch (Exception e) {
             e.getMessage();
         }
         return Response.status(Response.Status.OK).build();
-
     }
 
     /**
@@ -272,6 +271,16 @@ public class AuthenticationService {
         }
     }
 
+    @GET
+    @Path("twofactor")
+    public Response twofactor(
+            @FormParam("email") @NotBlank String email,
+            @FormParam("pwd") @NotBlank String pwd,
+            @FormParam("2factorkey") @NotBlank String key) {
+
+        return null;
+    }
+
     @POST
     @Path("addboardmember")
     @Produces(MediaType.APPLICATION_JSON)
@@ -289,10 +298,6 @@ public class AuthenticationService {
         } else {
             Group boardGroup = em.find(Group.class, Group.BOARD);
             user.getGroups().add(boardGroup);
-            System.out.println("BOARDGROUP: " + boardGroup);
-            for (Group group : user.getGroups()) {
-                System.out.println("ALLGROUPS: " + group.getName());
-            }
             AboutUsObject aboutUsObject = new AboutUsObject(user, position);
             em.persist(aboutUsObject);
         }
@@ -353,7 +358,7 @@ public class AuthenticationService {
             return Response.status(Response.Status.FORBIDDEN).build();
         }
 
-        try (Connection c = dataSource.getConnection(); PreparedStatement psg = c.prepareStatement(INSERT_USERGROUP)) {
+        try ( Connection c = dataSource.getConnection();  PreparedStatement psg = c.prepareStatement(INSERT_USERGROUP)) {
             psg.setString(1, role);
             psg.setString(2, uid);
             psg.executeUpdate();
@@ -399,7 +404,7 @@ public class AuthenticationService {
             return Response.status(Response.Status.FORBIDDEN).build();
         }
 
-        try (Connection c = dataSource.getConnection(); PreparedStatement psg = c.prepareStatement(DELETE_USERGROUP)) {
+        try ( Connection c = dataSource.getConnection();  PreparedStatement psg = c.prepareStatement(DELETE_USERGROUP)) {
             psg.setString(1, role);
             psg.setString(2, uid);
             psg.executeUpdate();
