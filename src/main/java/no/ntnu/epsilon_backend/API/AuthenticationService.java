@@ -210,7 +210,7 @@ public class AuthenticationService {
     private String issueToken(String name, Set<String> groups, HttpServletRequest request) {
         try {
             Date now = new Date();
-            Date expiration = Date.from(LocalDateTime.now().plusSeconds(15L).atZone(ZoneId.systemDefault()).toInstant());
+            Date expiration = Date.from(LocalDateTime.now().plusDays(7L).atZone(ZoneId.systemDefault()).toInstant());
             JwtBuilder jb = Jwts.builder()
                     .setHeaderParam("typ", "JWT")
                     .setHeaderParam("kid", "abc-1234567890")
@@ -234,7 +234,7 @@ public class AuthenticationService {
 
     private String issueRefreshToken(String name, HttpServletRequest request) {
         Date now = new Date();
-        Date expiration = Date.from(LocalDateTime.now().plusMinutes(90l).atZone(ZoneId.systemDefault()).toInstant());
+        Date expiration = Date.from(LocalDateTime.now().plusDays(200L).atZone(ZoneId.systemDefault()).toInstant());
         JwtBuilder jb = Jwts.builder()
                 .setHeaderParam("typ", "JWT")
                 .setHeaderParam("kid", "abc-1234567890")
