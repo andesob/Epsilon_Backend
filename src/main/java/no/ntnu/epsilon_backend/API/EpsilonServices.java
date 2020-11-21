@@ -25,7 +25,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.sql.DataSource;
 import javax.validation.constraints.NotBlank;
-import javax.ws.rs.BeanParam;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -37,8 +36,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import no.ntnu.epsilon_backend.API.AuthenticationService;
-import no.ntnu.epsilon_backend.domain.LatitudeLongitude;
-import no.ntnu.epsilon_backend.domain.Time;
 import no.ntnu.epsilon_backend.tables.Calendar;
 import no.ntnu.epsilon_backend.domain.ImageSend;
 import no.ntnu.epsilon_backend.setup.MailService;
@@ -172,8 +169,8 @@ public class EpsilonServices {
         faq.setQuestion(question);
         em.persist(faq);
 
-        if (em.find(Faq.class, faq.getQuestionId()) == null) {
-            return Response.status(Response.Status.CREATED).entity(faq).build();
+        if (em.find(Faq.class, faq.getQuestionId()) != null) {
+            return Response.status(Response.Status.CREATED).build();
         }
         return Response.status(Response.Status.BAD_REQUEST).build();
     }
@@ -189,7 +186,7 @@ public class EpsilonServices {
 
         if (faq != null) {
             em.remove(faq);
-            return Response.status(Response.Status.OK).entity(faq).build();
+            return Response.status(Response.Status.OK).build();
         }
         return Response.status(Response.Status.BAD_REQUEST).build();
     }

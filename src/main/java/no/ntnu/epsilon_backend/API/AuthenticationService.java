@@ -528,31 +528,28 @@ public class AuthenticationService {
 
     /**
      *
-     * @param uid
-     * @param password
+     * @param oldPassword
+     * @param newPassword
      * @param sc
      * @return
      */
     @PUT
-    @Path("changepassword")
+    @Path("changePassword")
     @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
-    public Response changePassword(@QueryParam("uid") String uid,
-            @QueryParam("pwd") String password,
+    public Response changePassword(
+            @FormParam("oldPwd") @NotBlank String oldPassword,
+            @FormParam("newPwd") @NotBlank String newPassword,
             @Context SecurityContext sc) {
         String authuser = sc.getUserPrincipal() != null ? sc.getUserPrincipal().getName() : null;
-        if (authuser == null || uid == null || (password == null || password.length() < 3)) {
-            log.log(Level.SEVERE, "Failed to change password on user {0}", uid);
-            return Response.status(Response.Status.BAD_REQUEST).build();
-        }
-
-        if (authuser.compareToIgnoreCase(uid) != 0 && !sc.isUserInRole(Group.ADMIN)) {
-            log.log(Level.SEVERE,
-                    "No admin access for {0}. Failed to change password on user {1}",
-                    new Object[]{authuser, uid});
-            return Response.status(Response.Status.BAD_REQUEST).build();
+        User user = em.find(User.class, principal.getName());
+        if (authuser == null || (newPassword == null || newPassword.length() < 5)) {
+            log.log(Level.SEVERE, "Failed to change password on user {0}");
+            return Response.status(Response.Status.BAD_REQUEST).entity("Kunne ikke endre passordet").build();
+        } else if (!hasher.verify(oldPassword.toCharArray(), user.getPassword())) {
+            log.log(Level.SEVERE, "Old password was wrong");
+            return Response.status(Response.Status.BAD_REQUEST).entity("Det gamle passordet er skrevet inn feil").build();
         } else {
-            User user = em.find(User.class, uid);
-            user.setPassword(hasher.generate(password.toCharArray()));
+            user.setPassword(hasher.generate(newPassword.toCharArray()));
             em.merge(user);
             return Response.ok().build();
         }
