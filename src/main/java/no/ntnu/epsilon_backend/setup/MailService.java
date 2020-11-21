@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.ejb.Asynchronous;
 import javax.ejb.Singleton;
 import javax.enterprise.event.ObservesAsync;
 import javax.inject.Inject;
@@ -110,6 +111,7 @@ public class MailService {
         }
     }
 
+    @Asynchronous
     public void onAsyncTwoFactorEmail(@ObservesAsync List<String> verificationList) {
         try {
             Properties props = new Properties();
@@ -131,7 +133,9 @@ public class MailService {
                 mimeMessage.setRecipient(MimeMessage.RecipientType.TO, new InternetAddress(reciever));
                 mimeMessage.setFrom(new InternetAddress(smtpUser));
                 mimeMessage.setText("Hello, to complete login please enter the following verification code: \n" + verificationList.get(0));
+                System.out.println("BEFOREBEFORE MAIL");
                 Transport.send(mimeMessage);
+                System.out.println("AFTERAFTER MAIL");
             } else {
                 log.log(Level.INFO, "Failed to find email for user {0}", reciever);
             }
