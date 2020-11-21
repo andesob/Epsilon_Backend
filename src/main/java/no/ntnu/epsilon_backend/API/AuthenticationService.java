@@ -45,7 +45,9 @@ import io.jsonwebtoken.security.InvalidKeyException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 import javax.servlet.http.HttpServletResponse;
 import no.ntnu.epsilon_backend.domain.EmailVerificationHash;
@@ -219,6 +221,39 @@ public class AuthenticationService {
             throw new RuntimeException("Failed to create token", t);
         }
     }
+    
+    private String issueRefreshToken(String name){
+        Date now = new Date();
+        Date expiration = Date.from(LocalDateTime.now().plusDays(200L).atZone(ZoneId.systemDefault()).toInstant());
+        JwtBuilder jb = Jwts.builder()
+                .setHeaderParam("tyo", "JWT")
+                .setHeaderParam("kid", "abc-1234567890")
+                .setSubject(name)
+                .setId("a-123")
+                .claim("iss", issuer)
+                .setIssuedAt(now)
+                .setExpiration(expiration)
+                .claim("upn", name)
+                .claim("aud", "aud")
+                .claim("auth_time", now)
+                .signWith(keyService.getPrivate());
+        return jb.compact();
+    }
+    @Path("isTokenExpired")
+    @GET
+    private Response isTokenExpired(@Context HttpServletRequest request){
+        User user = em.createNamedQuery(User.FIND_USER_BY_ID, User.class).setParameter("id", principal.getName()).getSingleResult();
+        Set<String> groups = new HashSet<>();
+        for(Group g : user.getGroups()){
+            groups.add(g.getName());
+        }
+        if(user!=null && principal.getExpirationTime() - System.currentTimeMillis()*1000 <= 0){
+           String accessToken = issueToken(principal.getName(), groups, request);
+           String refreshToken = issueRefreshToken(principal.getName());
+           return Response.ok(user).header(HttpHeaders.AUTHORIZATION,":Bearer " + accessToken).header("refreshTokenHeader", "Bearer " + refreshToken).build();
+        }
+
+    }
 
     /**
      * Does an insert into the AUSER and AUSERGROUP tables.It creates a SHA-256
@@ -271,7 +306,7 @@ public class AuthenticationService {
         }
     }
 
-    @GET
+    /*@GET
     @Path("twofactor")
     public Response twofactor(
             @FormParam("email") @NotBlank String email,
@@ -279,7 +314,7 @@ public class AuthenticationService {
             @FormParam("2factorkey") @NotBlank String key) {
 
         return null;
-    }
+    }*/
 
     @POST
     @Path("addboardmember")

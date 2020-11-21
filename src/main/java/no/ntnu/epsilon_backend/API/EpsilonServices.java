@@ -105,6 +105,7 @@ public class EpsilonServices {
 
     @GET
     @Path("getcalendar")
+    @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
     public List<Calendar> getCalendars() {
         return em.createNamedQuery(Calendar.FIND_ALL_CALENDAR_ITEMS, Calendar.class).getResultList();
