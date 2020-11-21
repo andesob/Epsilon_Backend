@@ -123,7 +123,6 @@ public class AuthenticationService {
      * @param request
      * @return
      */
-   
     @GET
     @Path("login")
     public Response login(
@@ -140,16 +139,12 @@ public class AuthenticationService {
         } else if (!user.getValidated()) {
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
-        
-        System.out.println("HVIT");
 
         CredentialValidationResult result = identityStoreHandler.validate(
                 new UsernamePasswordCredential(user.getUserid(), pwd));
 
         if (result.getStatus() == CredentialValidationResult.Status.VALID) {
-            System.out.println("DRITTEN I MIDTEN");
             send2FactorKey(user);
-            System.out.println("LAST MAN STANDING");
             return Response
                     .ok(user)
                     .build();
@@ -160,17 +155,17 @@ public class AuthenticationService {
 
     @GET
     @Path("verify")
+    @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
     @Produces(MediaType.APPLICATION_JSON)
     public Response verifyJwt() {
-        try{
-        User user = em.createNamedQuery(User.FIND_USER_BY_ID, User.class).setParameter("id", principal.getName()).getSingleResult();
-        if (user != null) {
-            return Response.ok(user).build();
-        } else {
-            return Response.status(Response.Status.UNAUTHORIZED).build();
-        }
-        }
-        catch(Exception e){
+        try {
+            User user = em.createNamedQuery(User.FIND_USER_BY_ID, User.class).setParameter("id", principal.getName()).getSingleResult();
+            if (user != null) {
+                return Response.ok(user).build();
+            } else {
+                return Response.status(Response.Status.UNAUTHORIZED).build();
+            }
+        } catch (Exception e) {
             e.getStackTrace();
         }
         return Response.status(Response.Status.UNAUTHORIZED).build();
@@ -236,8 +231,8 @@ public class AuthenticationService {
             throw new RuntimeException("Failed to create token", t);
         }
     }
-    
-    private String issueRefreshToken(String name,HttpServletRequest request){
+
+    private String issueRefreshToken(String name, HttpServletRequest request) {
         Date now = new Date();
         Date expiration = Date.from(LocalDateTime.now().plusMinutes(90l).atZone(ZoneId.systemDefault()).toInstant());
         JwtBuilder jb = Jwts.builder()
@@ -254,34 +249,33 @@ public class AuthenticationService {
                 .signWith(keyService.getPrivate());
         return jb.compact();
     }
+
     @Path("isTokenExpired")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response isTokenExpired(@Context HttpServletRequest request){
-        System.out.println("==============22222222222222222222222222");
-        try{
-            Claims claim = Jwts.parser().parseClaimsJws(request.getHeader("refreshToken")).getBody();
-            claim.getId();
-           System.out.println(claim.getId() + "=================================================================================");
-            System.out.println("123123123");
-        System.out.println("===========================" + principal.getName());
-        User user = em.createNamedQuery(User.FIND_USER_BY_ID, User.class).setParameter("id", principal.getName()).getSingleResult();
-        Set<String> groups = new HashSet<>();
-        for(Group g : user.getGroups()){
-            groups.add(g.getName());
+    public Response isTokenExpired(@Context HttpServletRequest request) {
+        try {
+            String[] arr = request.getHeader("refreshToken").split(" ");
+            Claims claim = Jwts.parser().setSigningKey(keyService.getPrivate()).parseClaimsJws(arr[1]).getBody();
+            String id = claim.getSubject();
+
+            User user = em.createNamedQuery(User.FIND_USER_BY_ID, User.class).setParameter("id", id).getSingleResult();
+            Set<String> groups = new HashSet<>();
+            for (Group g : user.getGroups()) {
+                groups.add(g.getName());
+            }
+            if (user != null && !(claim.getExpiration().getTime() - System.currentTimeMillis() <= 0)) {
+                String accessToken = issueToken(id, groups, request);
+                String refreshToken = issueRefreshToken(id, request);
+                return Response.ok(user)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .header("refreshTokenHeader", "Bearer " + refreshToken)
+                        .build();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        if(user!=null && principal.getExpirationTime() - System.currentTimeMillis()*1000 <= 0){
-           String accessToken = issueToken(principal.getName(), groups, request);
-           String refreshToken = issueRefreshToken(principal.getName(),request);
-           return Response.ok(user)
-                   .header(HttpHeaders.AUTHORIZATION,":Bearer " + accessToken)
-                   .header("refreshTokenHeader", "Bearer " + refreshToken)
-                   .build();
-        }
-        }catch(Exception e){
-            e.getStackTrace();
-        }
-       return Response.status(Response.Status.UNAUTHORIZED).build();
+        return Response.status(Response.Status.UNAUTHORIZED).build();
     }
 
     /**
@@ -342,9 +336,7 @@ public class AuthenticationService {
         List<String> list = new ArrayList<>();
         list.add("6969");
         list.add(user.getEmail());
-        System.out.println("BEFORE MAIL");
         mailService.onAsyncTwoFactorEmail(list);
-        System.out.println("AFTER MAIL");
         EmailTwoFactorHash twofactorhash = new EmailTwoFactorHash("6969");
         user.setTwofactorHash(twofactorhash);
         em.merge(user);
@@ -424,7 +416,6 @@ public class AuthenticationService {
             @FormParam("email") String email,
             @FormParam("lastName") String lastName
     ) {
-        System.out.println("INSIDE THE ADMIN");
         User user = null;
         try {
             user = em.createNamedQuery(User.FIND_USER_BY_EMAIL, User.class).setParameter("email", email).getSingleResult();

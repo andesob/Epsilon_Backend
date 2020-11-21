@@ -133,9 +133,7 @@ public class MailService {
                 mimeMessage.setRecipient(MimeMessage.RecipientType.TO, new InternetAddress(reciever));
                 mimeMessage.setFrom(new InternetAddress(smtpUser));
                 mimeMessage.setText("Hello, to complete login please enter the following verification code: \n" + verificationList.get(0));
-                System.out.println("BEFOREBEFORE MAIL");
                 Transport.send(mimeMessage);
-                System.out.println("AFTERAFTER MAIL");
             } else {
                 log.log(Level.INFO, "Failed to find email for user {0}", reciever);
             }
