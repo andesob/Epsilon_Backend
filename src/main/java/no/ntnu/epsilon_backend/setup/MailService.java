@@ -90,7 +90,6 @@ public class MailService {
                 MimeMessage mimeMessage = new MimeMessage(mailSession);
 
                 String hash = verificationStrings.get(1);
-                System.out.println(hash);
 
                 String reciever = verificationStrings.get(0);
                 if (reciever != null && reciever.length() > 0) {
@@ -108,6 +107,36 @@ public class MailService {
             }
 
         } catch (Exception e) {
+        }
+    }
+
+    public void onAsyncTwoFactorEmail(@ObservesAsync List<String> verificationList) {
+        try {
+            Properties props = new Properties();
+            props.put("mail.smtp.auth", "true");
+            props.put("mail.smtp.starttls.enable", "true");
+            props.put("mail.smtp.host", smtpHost);
+            props.put("mail.smtp.port", "587");
+            Session mailSession = Session.getInstance(props, new Authenticator() {
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(smtpUser, smtpPassword);
+                }
+            });
+
+            MimeMessage mimeMessage = new MimeMessage(mailSession);
+            mimeMessage.setSubject("Epsilon App security code");
+
+            String reciever = verificationList.get(1);
+            if (reciever != null && reciever.length() > 0) {
+                mimeMessage.setRecipient(MimeMessage.RecipientType.TO, new InternetAddress(reciever));
+                mimeMessage.setFrom(new InternetAddress(smtpUser));
+                mimeMessage.setText("Hello, to complete login please enter the following verification code: \n" + verificationList.get(0));
+                Transport.send(mimeMessage);
+            } else {
+                log.log(Level.INFO, "Failed to find email for user {0}", reciever);
+            }
+        } catch (MessagingException ex) {
+            Logger.getLogger(MailService.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 }

@@ -25,6 +25,7 @@ import javax.validation.constraints.Email;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import no.ntnu.epsilon_backend.domain.EmailTwoFactorHash;
 import no.ntnu.epsilon_backend.domain.EmailVerificationHash;
 import static no.ntnu.epsilon_backend.tables.User.FIND_ALL_USERS;
 import static no.ntnu.epsilon_backend.tables.User.FIND_USER_BY_EMAIL;
@@ -89,6 +90,8 @@ public class User implements Serializable {
     EmailVerificationHash emailVerificationHash;
 
     String emailHash;
+
+    EmailTwoFactorHash twofactorHash;
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "auser_properties", joinColumns = @JoinColumn(name = "uid"))

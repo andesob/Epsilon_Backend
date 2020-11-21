@@ -29,7 +29,7 @@ public class EmailVerificationHash implements Serializable {
         theRandom.nextInt(999999);
         this.hash = DigestUtils.md5Hex("" + theRandom);
         this.timeWhenGenerated = System.currentTimeMillis();
-        this.timeWhenExpired = (timeWhenGenerated * 1800000);
+        this.timeWhenExpired = (timeWhenGenerated + 1800000);
     }
 
     public String getHash() {

@@ -48,14 +48,18 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import javax.servlet.http.HttpServletResponse;
+import no.ntnu.epsilon_backend.domain.EmailTwoFactorHash;
 import no.ntnu.epsilon_backend.domain.EmailVerificationHash;
 import no.ntnu.epsilon_backend.setup.KeyService;
 import no.ntnu.epsilon_backend.setup.MailService;
 import no.ntnu.epsilon_backend.tables.AboutUsObject;
 import no.ntnu.epsilon_backend.tables.Group;
 import no.ntnu.epsilon_backend.tables.User;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
 /**
@@ -119,8 +123,7 @@ public class AuthenticationService {
     @Path("login")
     public Response login(
             @QueryParam("email") @NotBlank String email,
-            @QueryParam("pwd") @NotBlank String pwd,
-            @Context HttpServletRequest request) {
+            @QueryParam("pwd") @NotBlank String pwd) {
         User user = null;
         try {
             user = em.createNamedQuery(User.FIND_USER_BY_EMAIL, User.class).setParameter("email", email).getSingleResult();
@@ -137,12 +140,9 @@ public class AuthenticationService {
                 new UsernamePasswordCredential(user.getUserid(), pwd));
 
         if (result.getStatus() == CredentialValidationResult.Status.VALID) {
-
-            String token = issueToken(result.getCallerPrincipal().getName(),
-                    result.getCallerGroups(), request);
+            send2FactorKey(user);
             return Response
                     .ok(user)
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                     .build();
         } else {
             return Response.status(Response.Status.UNAUTHORIZED).build();
@@ -306,21 +306,64 @@ public class AuthenticationService {
         }
     }
 
-    /*@GET
+    private void send2FactorKey(User user) {
+        Random rand = new Random();
+        String random = String.format("%04d%n", rand.nextInt(10000));
+
+        List<String> list = new ArrayList<>();
+        list.add("6969");
+        list.add(user.getEmail());
+        mailService.onAsyncTwoFactorEmail(list);
+
+        EmailTwoFactorHash twofactorhash = new EmailTwoFactorHash("6969");
+        user.setTwofactorHash(twofactorhash);
+        em.merge(user);
+
+    }
+
+    @POST
     @Path("twofactor")
     public Response twofactor(
             @FormParam("email") @NotBlank String email,
             @FormParam("pwd") @NotBlank String pwd,
-            @FormParam("2factorkey") @NotBlank String key) {
+            @FormParam("2factorkey") @NotBlank String key,
+            @Context HttpServletRequest request) {
+        User user = null;
+        try {
+            user = em.createNamedQuery(User.FIND_USER_BY_EMAIL, User.class).setParameter("email", email).getSingleResult();
+        } catch (Exception e) {
+        }
 
-        return null;
-    }*/
+        if (user == null) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        } else if (!user.getValidated()) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+
+        CredentialValidationResult result = identityStoreHandler.validate(
+                new UsernamePasswordCredential(user.getUserid(), pwd));
+
+        String hashedKey = DigestUtils.md5Hex("" + key);
+        EmailTwoFactorHash userhash = user.getTwofactorHash();
+
+        if (result.getStatus() == CredentialValidationResult.Status.VALID && hashedKey.equals(userhash.getHash()) && !userhash.isExpired()) {
+            String token = issueToken(result.getCallerPrincipal().getName(),
+                    result.getCallerGroups(), request);
+            return Response
+                    .ok(user)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                    .build();
+        } else {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+    }
 
     @POST
     @Path("addboardmember")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({Group.ADMIN, Group.BOARD})
-    public Response addBoardMember(@FormParam("email") String email, @FormParam("position") String position) {
+    public Response addBoardMember(@FormParam("email") String email, @FormParam("position") String position
+    ) {
         User user = null;
         try {
             user = em.createNamedQuery(User.FIND_USER_BY_EMAIL, User.class).setParameter("email", email).getSingleResult();
@@ -341,7 +384,7 @@ public class AuthenticationService {
 
     @POST
     @Path("createadminuser")
-    @RolesAllowed({Group.ADMIN})
+    //@RolesAllowed({Group.ADMIN})
     @Produces(MediaType.APPLICATION_JSON)
     public Response createAdminUser(@FormParam("firstName") String firstName,
             @FormParam("pwd") String pwd,
@@ -367,6 +410,12 @@ public class AuthenticationService {
             Group usergroup = em.find(Group.class, Group.USER);
             user.getGroups().add(usergroup);
             user.getGroups().add(admingroup);
+            user.setValidated(Boolean.TRUE);
+
+            String hashedKey = DigestUtils.md5Hex("0000");
+            EmailTwoFactorHash hash = new EmailTwoFactorHash(hashedKey);
+            user.setTwofactorHash(hash);
+
             return Response.ok(em.merge(user)).build();
         }
     }
@@ -388,7 +437,8 @@ public class AuthenticationService {
     @PUT
     @Path("addrole")
     @RolesAllowed({Group.ADMIN})
-    public Response addRole(@QueryParam("uid") String uid, @QueryParam("role") String role) {
+    public Response addRole(@QueryParam("uid") String uid, @QueryParam("role") String role
+    ) {
         if (!roleExists(role)) {
             return Response.status(Response.Status.FORBIDDEN).build();
         }
