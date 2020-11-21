@@ -19,11 +19,17 @@ public class EmailTwoFactorHash implements Serializable {
     private long timeGenerated;
     private long timeExpired;
 
-    public EmailTwoFactorHash() {
-        Random theRandom = new Random();
-        theRandom.nextInt(662370);
-        this.hash = DigestUtils.md5Hex("" + theRandom);
-
+    public EmailTwoFactorHash(String number) {
+        this.hash = DigestUtils.md5Hex("" + number);
+        timeGenerated = System.currentTimeMillis();
+        timeExpired = timeGenerated + 900000;
     }
 
+    public String getHash() {
+        return hash;
+    }
+
+    public boolean isExpired() {
+        return timeExpired <= System.currentTimeMillis();
+    }
 }
