@@ -218,6 +218,20 @@ public class EpsilonServices {
         em.merge(calendar);
         return Response.ok(calendar).build();
     }
+    
+    @PUT
+    @Path("delete_calendar_item")
+    @RolesAllowed({Group.ADMIN,Group.BOARD})
+    public Response deleteCalendar(@FormParam ("id")long id){
+        Calendar calendar = em.find(Calendar.class, id);
+        System.out.println(id);
+        if(calendar != null){
+            em.remove(calendar);
+             return Response.status(Response.Status.OK).build();
+        }
+        return Response.status(Response.Status.BAD_REQUEST).build();
+    }
+    
 
     @POST
     @Path("addAboutUsObject")
