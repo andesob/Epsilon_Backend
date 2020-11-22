@@ -332,15 +332,16 @@ public class AuthenticationService {
     private void send2FactorKey(User user) {
         Random rand = new Random();
         String random = String.format("%04d%n", rand.nextInt(10000));
+        String key = random.trim();
 
         List<String> list = new ArrayList<>();
-        list.add("6969");
+        list.add(key);
         list.add(user.getEmail());
+
         mailService.onAsyncTwoFactorEmail(list);
-        EmailTwoFactorHash twofactorhash = new EmailTwoFactorHash("6969");
+        EmailTwoFactorHash twofactorhash = new EmailTwoFactorHash(key);
         user.setTwofactorHash(twofactorhash);
         em.merge(user);
-
     }
 
     @POST
@@ -365,7 +366,7 @@ public class AuthenticationService {
         CredentialValidationResult result = identityStoreHandler.validate(
                 new UsernamePasswordCredential(user.getUserid(), pwd));
 
-        String hashedKey = DigestUtils.md5Hex("" + key);
+        String hashedKey = DigestUtils.md5Hex(key);
         EmailTwoFactorHash userhash = user.getTwofactorHash();
 
         if (result.getStatus() == CredentialValidationResult.Status.VALID && hashedKey.equals(userhash.getHash()) && !userhash.isExpired()) {
@@ -409,7 +410,7 @@ public class AuthenticationService {
 
     @POST
     @Path("createadminuser")
-    //@RolesAllowed({Group.ADMIN})
+    @RolesAllowed({Group.ADMIN})
     @Produces(MediaType.APPLICATION_JSON)
     public Response createAdminUser(@FormParam("firstName") String firstName,
             @FormParam("pwd") String pwd,

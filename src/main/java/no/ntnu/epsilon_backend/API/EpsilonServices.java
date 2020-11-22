@@ -178,7 +178,7 @@ public class EpsilonServices {
     @PUT
     @Path("delete_faq")
     @Produces(MediaType.APPLICATION_JSON)
-    //@RolesAllowed({Group.ADMIN})
+    @RolesAllowed({Group.ADMIN, Group.BOARD})
     public Response deleteFaq(
             @FormParam("id") long faqId) {
 
@@ -218,20 +218,19 @@ public class EpsilonServices {
         em.merge(calendar);
         return Response.ok(calendar).build();
     }
-    
+
     @PUT
     @Path("delete_calendar_item")
-    @RolesAllowed({Group.ADMIN,Group.BOARD})
-    public Response deleteCalendar(@FormParam ("id")long id){
+    @RolesAllowed({Group.ADMIN, Group.BOARD})
+    public Response deleteCalendar(@FormParam("id") long id) {
         Calendar calendar = em.find(Calendar.class, id);
         System.out.println(id);
-        if(calendar != null){
+        if (calendar != null) {
             em.remove(calendar);
-             return Response.status(Response.Status.OK).build();
+            return Response.status(Response.Status.OK).build();
         }
         return Response.status(Response.Status.BAD_REQUEST).build();
     }
-    
 
     @POST
     @Path("addAboutUsObject")
@@ -258,7 +257,7 @@ public class EpsilonServices {
     @RolesAllowed({Group.ADMIN, Group.BOARD})
     public Response uploadPictureAsString(@FormParam("base64String") String base64String, @FormParam("userId") String userId, @FormParam("filename") String filename) {
         byte[] decodedString = Base64.getMimeDecoder().decode(base64String);
-        String filepath = "/C:/Dataingenior/" + filename;
+        String filepath = "/home/hialsvmadmin/pictures/" + filename;
 
         try {
             File file = new File(filepath);
@@ -294,6 +293,7 @@ public class EpsilonServices {
     @GET
     @Path("getUserPictures")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
     public Response getUserPictures() {
 
         List<Image> imageList = em.createNamedQuery(Image.FIND_ALL_IMAGES).getResultList();
