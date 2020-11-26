@@ -41,20 +41,16 @@ import no.ntnu.epsilon_backend.setup.DatasourceProducer;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import io.jsonwebtoken.JwtBuilder;
-import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.InvalidKeyException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-import javax.enterprise.event.Observes;
-import javax.persistence.NoResultException;
 import javax.servlet.http.HttpServletResponse;
 import no.ntnu.epsilon_backend.domain.EmailTwoFactorHash;
 import no.ntnu.epsilon_backend.domain.EmailVerificationHash;
@@ -468,7 +464,7 @@ public class AuthenticationService {
             return Response.status(Response.Status.FORBIDDEN).build();
         }
 
-        try ( Connection c = dataSource.getConnection();  PreparedStatement psg = c.prepareStatement(INSERT_USERGROUP)) {
+        try (Connection c = dataSource.getConnection(); PreparedStatement psg = c.prepareStatement(INSERT_USERGROUP)) {
             psg.setString(1, role);
             psg.setString(2, uid);
             psg.executeUpdate();
@@ -514,7 +510,7 @@ public class AuthenticationService {
             return Response.status(Response.Status.FORBIDDEN).build();
         }
 
-        try ( Connection c = dataSource.getConnection();  PreparedStatement psg = c.prepareStatement(DELETE_USERGROUP)) {
+        try (Connection c = dataSource.getConnection(); PreparedStatement psg = c.prepareStatement(DELETE_USERGROUP)) {
             psg.setString(1, role);
             psg.setString(2, uid);
             psg.executeUpdate();
@@ -547,7 +543,7 @@ public class AuthenticationService {
             return Response.status(Response.Status.BAD_REQUEST).entity("Kunne ikke endre passordet").build();
         } else if (!hasher.verify(oldPassword.toCharArray(), user.getPassword())) {
             log.log(Level.SEVERE, "Old password was wrong");
-            return Response.status(Response.Status.BAD_REQUEST).entity("Det gamle passordet er skrevet inn feil").build();
+            return Response.status(Response.Status.UNAUTHORIZED).entity("Det gamle passordet er skrevet inn feil").build();
         } else {
             user.setPassword(hasher.generate(newPassword.toCharArray()));
             em.merge(user);
