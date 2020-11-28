@@ -525,26 +525,29 @@ public class AuthenticationService {
 
     /**
      *
-     * @param oldPassword
+     * @param Oldpassword
+     * @param uid
      * @param newPassword
      * @param sc
      * @return
      */
     @PUT
-    @Path("changePassword")
-    @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
+    @Path("changepassword")
+    @RolesAllowed(value = {Group.USER})
     public Response changePassword(
-            @FormParam("oldPwd") @NotBlank String oldPassword,
-            @FormParam("newPwd") @NotBlank String newPassword,
+            @FormParam("oldPwd") String Oldpassword,
+            @FormParam("newPwd") String newPassword,
             @Context SecurityContext sc) {
         String authuser = sc.getUserPrincipal() != null ? sc.getUserPrincipal().getName() : null;
         User user = em.find(User.class, principal.getName());
+        String hashedOldPassword = hasher.generate(Oldpassword.toCharArray());
         if (authuser == null || (newPassword == null || newPassword.length() < 5)) {
             log.log(Level.SEVERE, "Failed to change password on user {0}");
-            return Response.status(Response.Status.BAD_REQUEST).entity("Kunne ikke endre passordet").build();
-        } else if (!hasher.verify(oldPassword.toCharArray(), user.getPassword())) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        } else if (!hashedOldPassword.equals(user.getPassword())) {
+
             log.log(Level.SEVERE, "Old password was wrong");
-            return Response.status(Response.Status.UNAUTHORIZED).entity("Det gamle passordet er skrevet inn feil").build();
+            return Response.status(Response.Status.BAD_REQUEST).build();
         } else {
             user.setPassword(hasher.generate(newPassword.toCharArray()));
             em.merge(user);
