@@ -10,6 +10,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -105,9 +106,18 @@ public class EpsilonServices {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
     public List<Calendar> getCalendars() {
-        return em.createNamedQuery(Calendar.FIND_ALL_CALENDAR_ITEMS, Calendar.class).getResultList();
+        LocalDateTime timeOfEvent;
+        LocalDate currentDate;
+   
+        List<Calendar> calendarList = em.createNamedQuery(Calendar.FIND_ALL_CALENDAR_ITEMS, Calendar.class).getResultList();
+        List<Calendar> resultList = new ArrayList<>();       
+        for(Calendar c : calendarList){
+            if(LocalDate.now().minusDays(10).isBefore(LocalDate.of(Integer.parseInt(c.getStartTimeParsed(0)), Integer.parseInt(c.getStartTimeParsed(1))+1, Integer.parseInt(c.getStartTimeParsed(2))))){
+                resultList.add(c);          
+        }   
     }
-
+        return resultList;
+    }
     @GET
     @Path("newsfeed")
     @Produces(MediaType.APPLICATION_JSON)
