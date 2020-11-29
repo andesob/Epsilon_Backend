@@ -59,7 +59,7 @@ public class MailService {
             MimeMessage mimeMessage = new MimeMessage(mailSession);
             mimeMessage.setSubject("New Message");
 
-            String reciever = "andrersu@stud.ntnu.no";
+            String reciever = "mobilefant@hotmail.com";
             if (reciever != null && reciever.length() > 0) {
                 mimeMessage.setRecipient(MimeMessage.RecipientType.TO, new InternetAddress(reciever));
                 mimeMessage.setFrom(new InternetAddress(smtpUser));
@@ -98,7 +98,7 @@ public class MailService {
                     mimeMessage.setFrom(new InternetAddress(smtpUser));
                     mimeMessage.setSubject("Epsilon Email Verification Link");
                     mimeMessage.setText("This link is valid for 30 minutes. Click this link to confirm your email address and complete setup for your account."
-                            + "\n\nVerification Link: " + "http://localhost:8080/Epsilon_Backend/api/auth/activateAccount?key1=" + hash);
+                            + "\n\nVerification Link: " + "http://158.38.101.247:8080/Epsilon_Backend/api/auth/activateAccount?key1=" + hash);
                     Transport.send(mimeMessage);
                 } else {
                     log.log(Level.INFO, "Failed to find email for user {0}", reciever);
