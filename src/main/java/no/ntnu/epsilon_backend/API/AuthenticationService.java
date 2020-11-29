@@ -41,20 +41,16 @@ import no.ntnu.epsilon_backend.setup.DatasourceProducer;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import io.jsonwebtoken.JwtBuilder;
-import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.InvalidKeyException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-import javax.enterprise.event.Observes;
-import javax.persistence.NoResultException;
 import javax.servlet.http.HttpServletResponse;
 import no.ntnu.epsilon_backend.domain.EmailTwoFactorHash;
 import no.ntnu.epsilon_backend.domain.EmailVerificationHash;
@@ -469,7 +465,7 @@ public class AuthenticationService {
             return Response.status(Response.Status.FORBIDDEN).build();
         }
 
-        try ( Connection c = dataSource.getConnection();  PreparedStatement psg = c.prepareStatement(INSERT_USERGROUP)) {
+        try (Connection c = dataSource.getConnection(); PreparedStatement psg = c.prepareStatement(INSERT_USERGROUP)) {
             psg.setString(1, role);
             psg.setString(2, uid);
             psg.executeUpdate();
@@ -515,7 +511,7 @@ public class AuthenticationService {
             return Response.status(Response.Status.FORBIDDEN).build();
         }
 
-        try ( Connection c = dataSource.getConnection();  PreparedStatement psg = c.prepareStatement(DELETE_USERGROUP)) {
+        try (Connection c = dataSource.getConnection(); PreparedStatement psg = c.prepareStatement(DELETE_USERGROUP)) {
             psg.setString(1, role);
             psg.setString(2, uid);
             psg.executeUpdate();
@@ -529,26 +525,29 @@ public class AuthenticationService {
 
     /**
      *
-     * @param oldPassword
+     * @param Oldpassword
+     * @param uid
      * @param newPassword
      * @param sc
      * @return
      */
     @PUT
-    @Path("changePassword")
-    @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
+    @Path("changepassword")
+    @RolesAllowed(value = {Group.USER})
     public Response changePassword(
-            @FormParam("oldPwd") @NotBlank String oldPassword,
-            @FormParam("newPwd") @NotBlank String newPassword,
+            @FormParam("oldPwd") String Oldpassword,
+            @FormParam("newPwd") String newPassword,
             @Context SecurityContext sc) {
         String authuser = sc.getUserPrincipal() != null ? sc.getUserPrincipal().getName() : null;
         User user = em.find(User.class, principal.getName());
+        String hashedOldPassword = hasher.generate(Oldpassword.toCharArray());
         if (authuser == null || (newPassword == null || newPassword.length() < 5)) {
             log.log(Level.SEVERE, "Failed to change password on user {0}");
-            return Response.status(Response.Status.BAD_REQUEST).entity("Kunne ikke endre passordet").build();
-        } else if (!hasher.verify(oldPassword.toCharArray(), user.getPassword())) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        } else if (!hashedOldPassword.equals(user.getPassword())) {
+
             log.log(Level.SEVERE, "Old password was wrong");
-            return Response.status(Response.Status.BAD_REQUEST).entity("Det gamle passordet er skrevet inn feil").build();
+            return Response.status(Response.Status.BAD_REQUEST).build();
         } else {
             user.setPassword(hasher.generate(newPassword.toCharArray()));
             em.merge(user);
