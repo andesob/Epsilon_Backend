@@ -257,16 +257,17 @@ public class EpsilonServices {
     @RolesAllowed({Group.ADMIN, Group.BOARD})
     public Response uploadPictureAsString(@FormParam("base64String") String base64String, @FormParam("userId") String userId, @FormParam("filename") String filename) {
         byte[] decodedString = Base64.getMimeDecoder().decode(base64String);
-        String filepath = "/home/hialsvmadmin/pictures/" + filename;
-
+        String filepath = "/opt/epsilon/pictures/" + filename;
         try {
             File file = new File(filepath);
             FileOutputStream imageOutputStream = new FileOutputStream(file);
             imageOutputStream.write(decodedString);
             imageOutputStream.close();
         } catch (FileNotFoundException ex) {
+            ex.printStackTrace();
             Logger.getLogger(EpsilonServices.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
+            ex.printStackTrace();
             Logger.getLogger(EpsilonServices.class.getName()).log(Level.SEVERE, null, ex);
         }
 
