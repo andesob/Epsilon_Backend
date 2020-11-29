@@ -108,16 +108,17 @@ public class EpsilonServices {
     public List<Calendar> getCalendars() {
         LocalDateTime timeOfEvent;
         LocalDate currentDate;
-   
+
         List<Calendar> calendarList = em.createNamedQuery(Calendar.FIND_ALL_CALENDAR_ITEMS, Calendar.class).getResultList();
-        List<Calendar> resultList = new ArrayList<>();       
-        for(Calendar c : calendarList){
-            if(LocalDate.now().minusDays(10).isBefore(LocalDate.of(Integer.parseInt(c.getStartTimeParsed(0)), Integer.parseInt(c.getStartTimeParsed(1))+1, Integer.parseInt(c.getStartTimeParsed(2))))){
-                resultList.add(c);          
-        }   
-    }
+        List<Calendar> resultList = new ArrayList<>();
+        for (Calendar c : calendarList) {
+            if (LocalDate.now().minusDays(10).isBefore(LocalDate.of(Integer.parseInt(c.getStartTimeParsed(0)), Integer.parseInt(c.getStartTimeParsed(1)) + 1, Integer.parseInt(c.getStartTimeParsed(2))))) {
+                resultList.add(c);
+            }
+        }
         return resultList;
     }
+
     @GET
     @Path("newsfeed")
     @Produces(MediaType.APPLICATION_JSON)
@@ -267,7 +268,7 @@ public class EpsilonServices {
     @RolesAllowed({Group.ADMIN, Group.BOARD})
     public Response uploadPictureAsString(@FormParam("base64String") String base64String, @FormParam("userId") String userId, @FormParam("filename") String filename) {
         byte[] decodedString = Base64.getMimeDecoder().decode(base64String);
-        String filepath = "/home/hialsvmadmin/pictures/" + filename;
+        String filepath = "/opt/epsilon/pictures/" + filename;
 
         try {
             File file = new File(filepath);
