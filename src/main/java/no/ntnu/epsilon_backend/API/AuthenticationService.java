@@ -168,6 +168,50 @@ public class AuthenticationService {
 
     }
 
+    @POST
+    @Path("forgotpassword")
+    public Response forgotPassword(@FormParam("email") @NotBlank String email) {
+        User user = null;
+        try {
+            user = em.createNamedQuery(User.FIND_USER_BY_EMAIL, User.class).setParameter("email", email).getSingleResult();
+        } catch (Exception e) {
+        }
+        if (user != null) {
+            sendForgotPasswordMail(user);
+            return Response.ok("Password reset").build();
+        }
+        return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+
+    private void sendForgotPasswordMail(User user) {
+        Random rand = new Random();
+        int r = rand.nextInt((15 - 10) + 1) + 10;
+        String key = getAlphaNumericString(r).trim();
+
+        List<String> list = new ArrayList<>();
+        list.add(key);
+        list.add(user.getEmail());
+
+        mailService.onAsyncForgotPassword(list);
+        user.setPassword(hasher.generate(key.toCharArray()));
+        em.merge(user);
+    }
+
+    static String getAlphaNumericString(int n) {
+        String AlphaNumericString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                + "0123456789"
+                + "abcdefghijklmnopqrstuvxyz";
+
+        StringBuilder sb = new StringBuilder(n);
+
+        for (int i = 0; i < n; i++) {
+            int index = (int) (AlphaNumericString.length() * Math.random());
+            sb.append(AlphaNumericString.charAt(index));
+        }
+
+        return sb.toString();
+    }
+
     @GET
     @Path("activateAccount")
     public Response activateAccount(
@@ -465,7 +509,7 @@ public class AuthenticationService {
             return Response.status(Response.Status.FORBIDDEN).build();
         }
 
-        try (Connection c = dataSource.getConnection(); PreparedStatement psg = c.prepareStatement(INSERT_USERGROUP)) {
+        try ( Connection c = dataSource.getConnection();  PreparedStatement psg = c.prepareStatement(INSERT_USERGROUP)) {
             psg.setString(1, role);
             psg.setString(2, uid);
             psg.executeUpdate();
@@ -511,7 +555,7 @@ public class AuthenticationService {
             return Response.status(Response.Status.FORBIDDEN).build();
         }
 
-        try (Connection c = dataSource.getConnection(); PreparedStatement psg = c.prepareStatement(DELETE_USERGROUP)) {
+        try ( Connection c = dataSource.getConnection();  PreparedStatement psg = c.prepareStatement(DELETE_USERGROUP)) {
             psg.setString(1, role);
             psg.setString(2, uid);
             psg.executeUpdate();
@@ -540,12 +584,11 @@ public class AuthenticationService {
             @Context SecurityContext sc) {
         String authuser = sc.getUserPrincipal() != null ? sc.getUserPrincipal().getName() : null;
         User user = em.find(User.class, principal.getName());
-        String hashedOldPassword = hasher.generate(Oldpassword.toCharArray());
+        Oldpassword = Oldpassword.trim();
         if (authuser == null || (newPassword == null || newPassword.length() < 5)) {
             log.log(Level.SEVERE, "Failed to change password on user {0}");
             return Response.status(Response.Status.BAD_REQUEST).build();
-        } else if (!hashedOldPassword.equals(user.getPassword())) {
-
+        } else if (!hasher.verify(Oldpassword.toCharArray(), user.getPassword())) {
             log.log(Level.SEVERE, "Old password was wrong");
             return Response.status(Response.Status.BAD_REQUEST).build();
         } else {

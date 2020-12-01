@@ -40,15 +40,15 @@ public class NewsfeedObject implements Serializable {
 
     String newsContent;
 
-    LocalDateTime timeWritten;
+    String timeWritten;
 
-    LocalDateTime lastUpdated;
+    String lastUpdated;
 
     public NewsfeedObject() {
 
     }
 
-    public NewsfeedObject(String title, String contents, LocalDateTime timeWritten, LocalDateTime lastUpdated) {
+    public NewsfeedObject(String title, String contents, String timeWritten, String lastUpdated) {
         this.title = title;
         this.newsContent = contents;
         this.timeWritten = timeWritten;

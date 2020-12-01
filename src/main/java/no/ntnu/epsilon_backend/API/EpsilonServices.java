@@ -106,8 +106,6 @@ public class EpsilonServices {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
     public List<Calendar> getCalendars() {
-        LocalDateTime timeOfEvent;
-        LocalDate currentDate;
 
         List<Calendar> calendarList = em.createNamedQuery(Calendar.FIND_ALL_CALENDAR_ITEMS, Calendar.class).getResultList();
         List<Calendar> resultList = new ArrayList<>();
@@ -124,7 +122,12 @@ public class EpsilonServices {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
     public List<NewsfeedObject> getAllNewsfeedObjects() {
-        return em.createNamedQuery(NewsfeedObject.FIND_ALL_NEWSFEEDOBJECTS, NewsfeedObject.class).getResultList();
+        List<NewsfeedObject> newsList = null;
+        try {
+            newsList = em.createNamedQuery(NewsfeedObject.FIND_ALL_NEWSFEEDOBJECTS, NewsfeedObject.class).getResultList();
+        } catch (Exception e) {
+        }
+        return newsList;
     }
 
     @PUT
@@ -132,7 +135,8 @@ public class EpsilonServices {
     @RolesAllowed({Group.ADMIN, Group.BOARD})
     public Response postNewsfeedObject(@FormParam("title") String title,
             @FormParam("content") String content) {
-        NewsfeedObject news = new NewsfeedObject(title, content, LocalDateTime.now(), LocalDateTime.now());
+        String time = LocalDateTime.now().toString();
+        NewsfeedObject news = new NewsfeedObject(title, content, time, time);
         em.persist(news);
         return Response.ok(news).build();
     }
