@@ -106,8 +106,6 @@ public class EpsilonServices {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
     public List<Calendar> getCalendars() {
-        LocalDateTime timeOfEvent;
-        LocalDate currentDate;
 
         List<Calendar> calendarList = em.createNamedQuery(Calendar.FIND_ALL_CALENDAR_ITEMS, Calendar.class).getResultList();
         List<Calendar> resultList = new ArrayList<>();
