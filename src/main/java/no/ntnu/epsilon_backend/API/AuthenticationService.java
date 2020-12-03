@@ -5,6 +5,7 @@
  */
 package no.ntnu.epsilon_backend.API;
 
+import io.jsonwebtoken.Claims;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -46,6 +47,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -152,12 +154,62 @@ public class AuthenticationService {
     @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
     @Produces(MediaType.APPLICATION_JSON)
     public Response verifyJwt() {
-        User user = em.createNamedQuery(User.FIND_USER_BY_ID, User.class).setParameter("id", principal.getName()).getSingleResult();
-        if (user != null) {
-            return Response.ok(user).build();
-        } else {
-            return Response.status(Response.Status.UNAUTHORIZED).build();
+        try {
+            User user = em.createNamedQuery(User.FIND_USER_BY_ID, User.class).setParameter("id", principal.getName()).getSingleResult();
+            if (user != null) {
+                return Response.ok(user).build();
+            } else {
+                return Response.status(Response.Status.UNAUTHORIZED).build();
+            }
+        } catch (Exception e) {
+            e.getStackTrace();
         }
+        return Response.status(Response.Status.UNAUTHORIZED).build();
+
+    }
+
+    @POST
+    @Path("forgotpassword")
+    public Response forgotPassword(@FormParam("email") @NotBlank String email) {
+        User user = null;
+        try {
+            user = em.createNamedQuery(User.FIND_USER_BY_EMAIL, User.class).setParameter("email", email).getSingleResult();
+        } catch (Exception e) {
+        }
+        if (user != null) {
+            sendForgotPasswordMail(user);
+            return Response.ok("Password reset").build();
+        }
+        return Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+
+    private void sendForgotPasswordMail(User user) {
+        Random rand = new Random();
+        int r = rand.nextInt((15 - 10) + 1) + 10;
+        String key = getAlphaNumericString(r).trim();
+
+        List<String> list = new ArrayList<>();
+        list.add(key);
+        list.add(user.getEmail());
+
+        mailService.onAsyncForgotPassword(list);
+        user.setPassword(hasher.generate(key.toCharArray()));
+        em.merge(user);
+    }
+
+    static String getAlphaNumericString(int n) {
+        String AlphaNumericString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                + "0123456789"
+                + "abcdefghijklmnopqrstuvxyz";
+
+        StringBuilder sb = new StringBuilder(n);
+
+        for (int i = 0; i < n; i++) {
+            int index = (int) (AlphaNumericString.length() * Math.random());
+            sb.append(AlphaNumericString.charAt(index));
+        }
+
+        return sb.toString();
     }
 
     @GET
@@ -198,7 +250,7 @@ public class AuthenticationService {
     private String issueToken(String name, Set<String> groups, HttpServletRequest request) {
         try {
             Date now = new Date();
-            Date expiration = Date.from(LocalDateTime.now().plusDays(1L).atZone(ZoneId.systemDefault()).toInstant());
+            Date expiration = Date.from(LocalDateTime.now().plusDays(7L).atZone(ZoneId.systemDefault()).toInstant());
             JwtBuilder jb = Jwts.builder()
                     .setHeaderParam("typ", "JWT")
                     .setHeaderParam("kid", "abc-1234567890")
@@ -218,6 +270,52 @@ public class AuthenticationService {
             log.log(Level.SEVERE, "Failed to create token", t);
             throw new RuntimeException("Failed to create token", t);
         }
+    }
+
+    private String issueRefreshToken(String name, HttpServletRequest request) {
+        Date now = new Date();
+        Date expiration = Date.from(LocalDateTime.now().plusDays(200L).atZone(ZoneId.systemDefault()).toInstant());
+        JwtBuilder jb = Jwts.builder()
+                .setHeaderParam("typ", "JWT")
+                .setHeaderParam("kid", "abc-1234567890")
+                .setSubject(name)
+                .setId("a-123")
+                .claim("iss", issuer)
+                .setIssuedAt(now)
+                .setExpiration(expiration)
+                .claim("upn", name)
+                .claim("aud", "aud")
+                .claim("auth_time", now)
+                .signWith(keyService.getPrivate());
+        return jb.compact();
+    }
+
+    @Path("isTokenExpired")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response isTokenExpired(@Context HttpServletRequest request) {
+        try {
+            String[] arr = request.getHeader("refreshToken").split(" ");
+            Claims claim = Jwts.parser().setSigningKey(keyService.getPrivate()).parseClaimsJws(arr[1]).getBody();
+            String id = claim.getSubject();
+
+            User user = em.createNamedQuery(User.FIND_USER_BY_ID, User.class).setParameter("id", id).getSingleResult();
+            Set<String> groups = new HashSet<>();
+            for (Group g : user.getGroups()) {
+                groups.add(g.getName());
+            }
+            if (user != null && !(claim.getExpiration().getTime() - System.currentTimeMillis() <= 0)) {
+                String accessToken = issueToken(id, groups, request);
+                String refreshToken = issueRefreshToken(id, request);
+                return Response.ok(user)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .header("refreshTokenHeader", "Bearer " + refreshToken)
+                        .build();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return Response.status(Response.Status.UNAUTHORIZED).build();
     }
 
     /**
@@ -274,16 +372,16 @@ public class AuthenticationService {
     private void send2FactorKey(User user) {
         Random rand = new Random();
         String random = String.format("%04d%n", rand.nextInt(10000));
+        String key = random.trim();
 
         List<String> list = new ArrayList<>();
-        list.add("6969");
+        list.add(key);
         list.add(user.getEmail());
-        mailService.onAsyncTwoFactorEmail(list);
 
-        EmailTwoFactorHash twofactorhash = new EmailTwoFactorHash("6969");
+        mailService.onAsyncTwoFactorEmail(list);
+        EmailTwoFactorHash twofactorhash = new EmailTwoFactorHash(key);
         user.setTwofactorHash(twofactorhash);
         em.merge(user);
-
     }
 
     @POST
@@ -308,15 +406,18 @@ public class AuthenticationService {
         CredentialValidationResult result = identityStoreHandler.validate(
                 new UsernamePasswordCredential(user.getUserid(), pwd));
 
-        String hashedKey = DigestUtils.md5Hex("" + key);
+        String hashedKey = DigestUtils.md5Hex(key);
         EmailTwoFactorHash userhash = user.getTwofactorHash();
 
         if (result.getStatus() == CredentialValidationResult.Status.VALID && hashedKey.equals(userhash.getHash()) && !userhash.isExpired()) {
             String token = issueToken(result.getCallerPrincipal().getName(),
                     result.getCallerGroups(), request);
+            String refreshToken = issueRefreshToken(result.getCallerPrincipal().getName(),
+                    request);
             return Response
                     .ok(user)
                     .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                    .header("refreshTokenHeader", "Bearer " + refreshToken)
                     .build();
         } else {
             return Response.status(Response.Status.UNAUTHORIZED).build();
@@ -349,7 +450,7 @@ public class AuthenticationService {
 
     @POST
     @Path("createadminuser")
-    //@RolesAllowed({Group.ADMIN})
+    @RolesAllowed({Group.ADMIN})
     @Produces(MediaType.APPLICATION_JSON)
     public Response createAdminUser(@FormParam("firstName") String firstName,
             @FormParam("pwd") String pwd,
@@ -468,31 +569,30 @@ public class AuthenticationService {
 
     /**
      *
+     * @param Oldpassword
      * @param uid
-     * @param password
+     * @param newPassword
      * @param sc
      * @return
      */
     @PUT
     @Path("changepassword")
-    @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
-    public Response changePassword(@QueryParam("uid") String uid,
-            @QueryParam("pwd") String password,
+    @RolesAllowed(value = {Group.USER})
+    public Response changePassword(
+            @FormParam("oldPwd") String Oldpassword,
+            @FormParam("newPwd") String newPassword,
             @Context SecurityContext sc) {
         String authuser = sc.getUserPrincipal() != null ? sc.getUserPrincipal().getName() : null;
-        if (authuser == null || uid == null || (password == null || password.length() < 3)) {
-            log.log(Level.SEVERE, "Failed to change password on user {0}", uid);
+        User user = em.find(User.class, principal.getName());
+        Oldpassword = Oldpassword.trim();
+        if (authuser == null || (newPassword == null || newPassword.length() < 5)) {
+            log.log(Level.SEVERE, "Failed to change password on user {0}");
             return Response.status(Response.Status.BAD_REQUEST).build();
-        }
-
-        if (authuser.compareToIgnoreCase(uid) != 0 && !sc.isUserInRole(Group.ADMIN)) {
-            log.log(Level.SEVERE,
-                    "No admin access for {0}. Failed to change password on user {1}",
-                    new Object[]{authuser, uid});
+        } else if (!hasher.verify(Oldpassword.toCharArray(), user.getPassword())) {
+            log.log(Level.SEVERE, "Old password was wrong");
             return Response.status(Response.Status.BAD_REQUEST).build();
         } else {
-            User user = em.find(User.class, uid);
-            user.setPassword(hasher.generate(password.toCharArray()));
+            user.setPassword(hasher.generate(newPassword.toCharArray()));
             em.merge(user);
             return Response.ok().build();
         }

@@ -56,6 +56,8 @@ public class Calendar implements Serializable{
         this.endTime = endTime;
         this.address = address;
     }
-    
-    
+    public String getStartTimeParsed(int poistion) {
+        String[] arr = getStartTime().split(",");
+        return arr[poistion];
+    }  
 }

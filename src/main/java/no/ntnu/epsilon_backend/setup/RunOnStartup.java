@@ -31,7 +31,6 @@ public class RunOnStartup {
      */
     @PostConstruct
     public void init() {
-        System.out.println("Wrrooom! " + new Date());
         long groups = (long) em.createQuery("SELECT count(g.name) from Group g").getSingleResult();
         if (groups == 0) {
             em.persist(new Group(Group.USER));

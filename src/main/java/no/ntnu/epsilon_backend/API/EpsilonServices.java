@@ -10,6 +10,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -25,7 +26,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.sql.DataSource;
 import javax.validation.constraints.NotBlank;
-import javax.ws.rs.BeanParam;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -37,8 +37,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import no.ntnu.epsilon_backend.API.AuthenticationService;
-import no.ntnu.epsilon_backend.domain.LatitudeLongitude;
-import no.ntnu.epsilon_backend.domain.Time;
 import no.ntnu.epsilon_backend.tables.Calendar;
 import no.ntnu.epsilon_backend.domain.ImageSend;
 import no.ntnu.epsilon_backend.setup.MailService;
@@ -105,9 +103,18 @@ public class EpsilonServices {
 
     @GET
     @Path("getcalendar")
+    @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
     public List<Calendar> getCalendars() {
-        return em.createNamedQuery(Calendar.FIND_ALL_CALENDAR_ITEMS, Calendar.class).getResultList();
+
+        List<Calendar> calendarList = em.createNamedQuery(Calendar.FIND_ALL_CALENDAR_ITEMS, Calendar.class).getResultList();
+        List<Calendar> resultList = new ArrayList<>();
+        for (Calendar c : calendarList) {
+            if (LocalDate.now().minusDays(10).isBefore(LocalDate.of(Integer.parseInt(c.getStartTimeParsed(0)), Integer.parseInt(c.getStartTimeParsed(1)) + 1, Integer.parseInt(c.getStartTimeParsed(2))))) {
+                resultList.add(c);
+            }
+        }
+        return resultList;
     }
 
     @GET
@@ -115,7 +122,12 @@ public class EpsilonServices {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
     public List<NewsfeedObject> getAllNewsfeedObjects() {
-        return em.createNamedQuery(NewsfeedObject.FIND_ALL_NEWSFEEDOBJECTS, NewsfeedObject.class).getResultList();
+        List<NewsfeedObject> newsList = null;
+        try {
+            newsList = em.createNamedQuery(NewsfeedObject.FIND_ALL_NEWSFEEDOBJECTS, NewsfeedObject.class).getResultList();
+        } catch (Exception e) {
+        }
+        return newsList;
     }
 
     @PUT
@@ -123,7 +135,8 @@ public class EpsilonServices {
     @RolesAllowed({Group.ADMIN, Group.BOARD})
     public Response postNewsfeedObject(@FormParam("title") String title,
             @FormParam("content") String content) {
-        NewsfeedObject news = new NewsfeedObject(title, content, LocalDateTime.now(), LocalDateTime.now());
+        String time = LocalDateTime.now().toString();
+        NewsfeedObject news = new NewsfeedObject(title, content, time, time);
         em.persist(news);
         return Response.ok(news).build();
     }
@@ -171,8 +184,8 @@ public class EpsilonServices {
         faq.setQuestion(question);
         em.persist(faq);
 
-        if (em.find(Faq.class, faq.getQuestionId()) == null) {
-            return Response.status(Response.Status.CREATED).entity(faq).build();
+        if (em.find(Faq.class, faq.getQuestionId()) != null) {
+            return Response.status(Response.Status.CREATED).build();
         }
         return Response.status(Response.Status.BAD_REQUEST).build();
     }
@@ -180,7 +193,7 @@ public class EpsilonServices {
     @PUT
     @Path("delete_faq")
     @Produces(MediaType.APPLICATION_JSON)
-    //@RolesAllowed({Group.ADMIN})
+    @RolesAllowed({Group.ADMIN, Group.BOARD})
     public Response deleteFaq(
             @FormParam("id") long faqId) {
 
@@ -188,7 +201,7 @@ public class EpsilonServices {
 
         if (faq != null) {
             em.remove(faq);
-            return Response.status(Response.Status.OK).entity(faq).build();
+            return Response.status(Response.Status.OK).build();
         }
         return Response.status(Response.Status.BAD_REQUEST).build();
     }
@@ -221,6 +234,19 @@ public class EpsilonServices {
         return Response.ok(calendar).build();
     }
 
+    @PUT
+    @Path("delete_calendar_item")
+    @RolesAllowed({Group.ADMIN, Group.BOARD})
+    public Response deleteCalendar(@FormParam("id") long id) {
+        Calendar calendar = em.find(Calendar.class, id);
+        System.out.println(id);
+        if (calendar != null) {
+            em.remove(calendar);
+            return Response.status(Response.Status.OK).build();
+        }
+        return Response.status(Response.Status.BAD_REQUEST).build();
+    }
+
     @POST
     @Path("addAboutUsObject")
     @RolesAllowed({Group.ADMIN, Group.BOARD})
@@ -246,7 +272,7 @@ public class EpsilonServices {
     @RolesAllowed({Group.ADMIN, Group.BOARD})
     public Response uploadPictureAsString(@FormParam("base64String") String base64String, @FormParam("userId") String userId, @FormParam("filename") String filename) {
         byte[] decodedString = Base64.getMimeDecoder().decode(base64String);
-        String filepath = "/C:/Dataingenior/" + filename;
+        String filepath = "/opt/epsilon/pictures/" + filename;
 
         try {
             File file = new File(filepath);
@@ -282,6 +308,7 @@ public class EpsilonServices {
     @GET
     @Path("getUserPictures")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
     public Response getUserPictures() {
 
         List<Image> imageList = em.createNamedQuery(Image.FIND_ALL_IMAGES).getResultList();
