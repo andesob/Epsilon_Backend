@@ -32,7 +32,11 @@ import static no.ntnu.epsilon_backend.tables.Calendar.FIND_ALL_CALENDAR_ITEMS;
 @NamedQuery(name = FIND_ALL_CALENDAR_ITEMS,query = " select c from Calendar c") //Order by day if problems putting it in order in app
 
 public class Calendar implements Serializable{
-        public static final String FIND_ALL_CALENDAR_ITEMS = "Calendar.findAllCalendarItems";
+
+    /**
+     *
+     */
+    public static final String FIND_ALL_CALENDAR_ITEMS = "Calendar.findAllCalendarItems";
 
     @Id
     @GeneratedValue
@@ -48,6 +52,15 @@ public class Calendar implements Serializable{
     
     String address;
     
+    /**
+     *
+     * @param title
+     * @param description
+     * @param latLng
+     * @param startTime
+     * @param endTime
+     * @param address
+     */
     public Calendar(String title, String description, String latLng, String startTime, String endTime, String address) {
         this.title = title;
         this.description = description;
@@ -56,6 +69,12 @@ public class Calendar implements Serializable{
         this.endTime = endTime;
         this.address = address;
     }
+
+    /**
+     *
+     * @param poistion
+     * @return
+     */
     public String getStartTimeParsed(int poistion) {
         String[] arr = getStartTime().split(",");
         return arr[poistion];

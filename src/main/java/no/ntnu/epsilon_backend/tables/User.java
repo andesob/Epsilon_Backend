@@ -50,14 +50,45 @@ import static no.ntnu.epsilon_backend.tables.User.FIND_USER_BY_IDS;
 @NoArgsConstructor
 public class User implements Serializable {
 
+    /**
+     *
+     */
     public static final String FIND_USER_BY_IDS = "User.findUserByIds";
+
+    /**
+     *
+     */
     public static final String FIND_ALL_USERS = "User.findAllUsers";
+
+    /**
+     *
+     */
     public static final String FIND_USER_BY_EMAIL = "User.findUserByEmail";
+
+    /**
+     *
+     */
     public static final String FIND_USER_BY_ID = "User.findUserById";
+
+    /**
+     *
+     */
     public static final String FIND_USER_BY_HASH = "User.findUserByHash";
 
+    /**
+     *
+     */
     public enum State {
-        ACTIVE, INACTIVE
+
+        /**
+         *
+         */
+        ACTIVE,
+
+        /**
+         *
+         */
+        INACTIVE
     }
 
     @Id
@@ -99,6 +130,10 @@ public class User implements Serializable {
     @Column(name = "value")
     Map<String, String> properties = new HashMap<>();
 
+    /**
+     *
+     * @return
+     */
     public List<Group> getGroups() {
         if (groups == null) {
             groups = new ArrayList<>();

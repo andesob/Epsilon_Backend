@@ -116,8 +116,8 @@ public class AuthenticationService {
      *
      * @param email
      * @param pwd
-     * @param request
-     * @return
+     * @return Response OK if valid, Unauthorized if not- BAD REQUEST if user is
+     * not found
      */
     @GET
     @Path("login")
@@ -149,6 +149,10 @@ public class AuthenticationService {
         }
     }
 
+    /**
+     *
+     * @return Response OK if token is valid. UNAUTHORIZED if not
+     */
     @GET
     @Path("verify")
     @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
@@ -168,6 +172,11 @@ public class AuthenticationService {
 
     }
 
+    /**
+     *
+     * @param email
+     * @return Response OK if user exists, UNAUTHORIZED if not
+     */
     @POST
     @Path("forgotpassword")
     public Response forgotPassword(@FormParam("email") @NotBlank String email) {
@@ -183,6 +192,11 @@ public class AuthenticationService {
         return Response.status(Response.Status.UNAUTHORIZED).build();
     }
 
+    /**
+     * Sends mail with new randomly generated password
+     *
+     * @param user
+     */
     private void sendForgotPasswordMail(User user) {
         Random rand = new Random();
         int r = rand.nextInt((15 - 10) + 1) + 10;
@@ -197,7 +211,7 @@ public class AuthenticationService {
         em.merge(user);
     }
 
-    static String getAlphaNumericString(int n) {
+    private String getAlphaNumericString(int n) {
         String AlphaNumericString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                 + "0123456789"
                 + "abcdefghijklmnopqrstuvxyz";
@@ -212,6 +226,12 @@ public class AuthenticationService {
         return sb.toString();
     }
 
+    /**
+     *
+     * @param request
+     * @param response
+     * @return Response OK. Status.GONE is the user takes to long to use link
+     */
     @GET
     @Path("activateAccount")
     public Response activateAccount(
@@ -228,6 +248,8 @@ public class AuthenticationService {
                 return Response.status(Response.Status.GONE).build();
             }
 
+            // If user exists and is not validated, set to validated and redirect to success page.
+            // Else redirect to failure page
             if (user != null && !user.getValidated()) {
                 user.setValidated(true);
                 response.sendRedirect("../../Success.jsp");
@@ -245,7 +267,7 @@ public class AuthenticationService {
      * @param name
      * @param groups
      * @param request
-     * @return
+     * @return String
      */
     private String issueToken(String name, Set<String> groups, HttpServletRequest request) {
         try {
@@ -272,6 +294,12 @@ public class AuthenticationService {
         }
     }
 
+    /**
+     *
+     * @param name
+     * @param request
+     * @return String
+     */
     private String issueRefreshToken(String name, HttpServletRequest request) {
         Date now = new Date();
         Date expiration = Date.from(LocalDateTime.now().plusDays(200L).atZone(ZoneId.systemDefault()).toInstant());
@@ -290,6 +318,12 @@ public class AuthenticationService {
         return jb.compact();
     }
 
+    /**
+     *
+     * @param request
+     * @return Response OK with new tokens if refresh token is not expired.
+     * UNAUTHORIZED if it is expired
+     */
     @Path("isTokenExpired")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -325,11 +359,10 @@ public class AuthenticationService {
      * doing an authentication.
      *
      * @param firstName
-     * @param uid
      * @param email
      * @param lastName
      * @param pwd
-     * @return
+     * @return Resopnse OK with user created
      */
     @POST
     @Path("create_user")
@@ -363,12 +396,18 @@ public class AuthenticationService {
             arrayList.add(user.getEmail());
             arrayList.add(user.getEmailVerificationHash().getHash());
 
+            // Send email with verification link to user
             mailService.onAsyncVerificationEmail(arrayList);
 
             return Response.ok(em.merge(user)).build();
         }
     }
 
+    /**
+     * Send email with twofactor code to the user that tried to log in
+     *
+     * @param user
+     */
     private void send2FactorKey(User user) {
         Random rand = new Random();
         String random = String.format("%04d%n", rand.nextInt(10000));
@@ -384,6 +423,15 @@ public class AuthenticationService {
         em.merge(user);
     }
 
+    /**
+     *
+     * @param email
+     * @param pwd
+     * @param key
+     * @param request
+     * @return Response OK with tokens if login is successful. UNAUTHORIZED if
+     * not BAD REQUEST if user is not validated
+     */
     @POST
     @Path("twofactor")
     public Response twofactor(
@@ -424,6 +472,13 @@ public class AuthenticationService {
         }
     }
 
+    /**
+     *
+     * @param email
+     * @param position
+     * @return Response OK with user. serverError if email is not valid for a
+     * user
+     */
     @POST
     @Path("addboardmember")
     @Produces(MediaType.APPLICATION_JSON)
@@ -448,6 +503,14 @@ public class AuthenticationService {
         return Response.ok(em.merge(user)).build();
     }
 
+    /**
+     *
+     * @param firstName
+     * @param pwd
+     * @param email
+     * @param lastName
+     * @return Response with admin user
+     */
     @POST
     @Path("createadminuser")
     @RolesAllowed({Group.ADMIN})
@@ -486,6 +549,10 @@ public class AuthenticationService {
         }
     }
 
+    /**
+     *
+     * @return user
+     */
     @GET
     @Path("currentuser")
     @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
@@ -498,7 +565,8 @@ public class AuthenticationService {
      *
      * @param uid
      * @param role
-     * @return
+     * @return Response ok if no problems. FORBIDDEN if exists, BAD REQUEST if
+     * sqlexception
      */
     @PUT
     @Path("addrole")
@@ -524,7 +592,7 @@ public class AuthenticationService {
     /**
      *
      * @param role
-     * @return
+     * @return boolean true if exists, false if not
      */
     private boolean roleExists(String role) {
         boolean result = false;
@@ -545,7 +613,8 @@ public class AuthenticationService {
      *
      * @param uid
      * @param role
-     * @return
+     * @return Response OK if removed without errors. FORBIDDEN is role doesnt
+     * exist. BAD REQUEST if sqlexception
      */
     @PUT
     @Path("removerole")
@@ -570,10 +639,10 @@ public class AuthenticationService {
     /**
      *
      * @param Oldpassword
-     * @param uid
      * @param newPassword
      * @param sc
-     * @return
+     * @return Response ok if password changed successfully. BAD REQUEST if old
+     * password is wrong or something went wrong
      */
     @PUT
     @Path("changepassword")

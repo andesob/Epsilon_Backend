@@ -19,16 +19,28 @@ public class EmailTwoFactorHash implements Serializable {
     private long timeGenerated;
     private long timeExpired;
 
+    /**
+     *
+     * @param number
+     */
     public EmailTwoFactorHash(String number) {
         hash = DigestUtils.md5Hex(number);
         timeGenerated = System.currentTimeMillis();
         timeExpired = timeGenerated + 900000;
     }
 
+    /**
+     *
+     * @return
+     */
     public String getHash() {
         return hash;
     }
 
+    /**
+     *
+     * @return
+     */
     public boolean isExpired() {
         return timeExpired <= System.currentTimeMillis();
     }

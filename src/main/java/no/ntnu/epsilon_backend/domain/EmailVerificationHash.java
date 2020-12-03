@@ -19,6 +19,9 @@ public class EmailVerificationHash implements Serializable {
     private long timeWhenGenerated;
     private long timeWhenExpired;
 
+    /**
+     *
+     */
     public EmailVerificationHash() {
         setNewHash();
     }
@@ -32,14 +35,26 @@ public class EmailVerificationHash implements Serializable {
         this.timeWhenExpired = (timeWhenGenerated + 1800000);
     }
 
+    /**
+     *
+     * @return
+     */
     public String getHash() {
         return this.hash;
     }
 
+    /**
+     *
+     * @return
+     */
     public Long getTimeWhenGenerated() {
         return this.timeWhenGenerated;
     }
 
+    /**
+     *
+     * @return
+     */
     public long getTimeWhenExpired() {
         return this.timeWhenExpired;
     }
