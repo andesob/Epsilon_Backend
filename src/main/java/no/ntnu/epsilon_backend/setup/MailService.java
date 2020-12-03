@@ -73,6 +73,10 @@ public class MailService {
         }
     }
 
+    /**
+     *
+     * @param verificationStrings
+     */
     public void onAsyncVerificationEmail(@ObservesAsync List<String> verificationStrings) {
         try {
 
@@ -111,6 +115,10 @@ public class MailService {
         }
     }
 
+    /**
+     *
+     * @param verificationList
+     */
     @Asynchronous
     public void onAsyncTwoFactorEmail(@ObservesAsync List<String> verificationList) {
         try {
@@ -142,6 +150,10 @@ public class MailService {
         }
     }
 
+    /**
+     *
+     * @param verificationList
+     */
     @Asynchronous
     public void onAsyncForgotPassword(@ObservesAsync List<String> verificationList) {
         try {

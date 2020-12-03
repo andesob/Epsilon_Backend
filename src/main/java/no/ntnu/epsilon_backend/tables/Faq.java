@@ -27,6 +27,9 @@ import static no.ntnu.epsilon_backend.tables.Faq.FIND_ALL_FAQS;
 @NamedQuery(name = FIND_ALL_FAQS, query = "select u from Faq u")
 public class Faq implements Serializable {
 
+    /**
+     *
+     */
     public static final String FIND_ALL_FAQS = "faq.findAllFaqs";
 
     @Id
@@ -37,6 +40,9 @@ public class Faq implements Serializable {
 
     String answer;
 
+    /**
+     *
+     */
     public Faq() {
 
     }

@@ -36,7 +36,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
-import no.ntnu.epsilon_backend.API.AuthenticationService;
 import no.ntnu.epsilon_backend.tables.Calendar;
 import no.ntnu.epsilon_backend.domain.ImageSend;
 import no.ntnu.epsilon_backend.setup.MailService;
@@ -80,10 +79,6 @@ public class EpsilonServices {
     @ConfigProperty(name = "photo.storage.path", defaultValue = "chatphotos")
     String photoPath;
 
-    private String getPhotoPath() {
-        return photoPath;
-    }
-
     /**
      * Returns list of all users
      *
@@ -96,11 +91,10 @@ public class EpsilonServices {
         return em.createNamedQuery(User.FIND_ALL_USERS, User.class).getResultList();
     }
 
-    private User getCurrentUser() {
-        User user = em.find(User.class, sc.getUserPrincipal().getName());
-        return user;
-    }
-
+    /**
+     *
+     * @return List of calendar items
+     */
     @GET
     @Path("getcalendar")
     @Produces(MediaType.APPLICATION_JSON)
@@ -117,6 +111,10 @@ public class EpsilonServices {
         return resultList;
     }
 
+    /**
+     *
+     * @return List of newsfeedobjects
+     */
     @GET
     @Path("newsfeed")
     @Produces(MediaType.APPLICATION_JSON)
@@ -130,6 +128,12 @@ public class EpsilonServices {
         return newsList;
     }
 
+    /**
+     *
+     * @param title
+     * @param content
+     * @return Response ok with newsfeedobject created
+     */
     @PUT
     @Path("postNews")
     @RolesAllowed({Group.ADMIN, Group.BOARD})
@@ -141,8 +145,9 @@ public class EpsilonServices {
         return Response.ok(news).build();
     }
 
-    /*
-    @return all faqs
+    /**
+     *
+     * @return List of faqobjects
      */
     @GET
     @Path("get_faqs")
@@ -153,6 +158,13 @@ public class EpsilonServices {
 
     /*
     @return alter a faq
+     */
+    /**
+     *
+     * @param question
+     * @param answer
+     * @param id
+     * @return Response
      */
     @POST
     @Path("edit_faq")
@@ -172,6 +184,12 @@ public class EpsilonServices {
     /*
     @return
      */
+    /**
+     *
+     * @param question
+     * @param answer
+     * @return Response
+     */
     @PUT
     @Path("add_faqs")
     @Produces(MediaType.APPLICATION_JSON)
@@ -184,12 +202,18 @@ public class EpsilonServices {
         faq.setQuestion(question);
         em.persist(faq);
 
+        //Returns BAD REQUEST if the faq is not created correctly
         if (em.find(Faq.class, faq.getQuestionId()) != null) {
             return Response.status(Response.Status.CREATED).build();
         }
         return Response.status(Response.Status.BAD_REQUEST).build();
     }
 
+    /**
+     *
+     * @param faqId
+     * @return Response
+     */
     @PUT
     @Path("delete_faq")
     @Produces(MediaType.APPLICATION_JSON)
@@ -199,6 +223,7 @@ public class EpsilonServices {
 
         Faq faq = em.find(Faq.class, faqId);
 
+        //Returns BAD REQUEST if faq does not exist
         if (faq != null) {
             em.remove(faq);
             return Response.status(Response.Status.OK).build();
@@ -210,15 +235,31 @@ public class EpsilonServices {
     /*
     @return all faqs
      */
+    /**
+     *
+     * @param question
+     * @return Response ACCEPTED
+     */
     @POST
     @Path("ask_question")
     @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
     public Response askQuestion(@FormParam("question")
             @NotBlank String question) {
+        //Sends mail with the question
         mailService.onAsyncMessage(question);
         return Response.status(Response.Status.ACCEPTED).entity(question).build();
     }
 
+    /**
+     *
+     * @param title
+     * @param description
+     * @param latLng
+     * @param startTime
+     * @param endTime
+     * @param address
+     * @return Response ok with calendar object
+     */
     @PUT
     @Path("add_calendar_item")
     @RolesAllowed({Group.ADMIN, Group.BOARD})
@@ -234,19 +275,33 @@ public class EpsilonServices {
         return Response.ok(calendar).build();
     }
 
+    /**
+     *
+     * @param id
+     * @return Response
+     */
     @PUT
     @Path("delete_calendar_item")
     @RolesAllowed({Group.ADMIN, Group.BOARD})
     public Response deleteCalendar(@FormParam("id") long id) {
         Calendar calendar = em.find(Calendar.class, id);
-        System.out.println(id);
+
+        //OK if calendar item exists and is removed
         if (calendar != null) {
             em.remove(calendar);
             return Response.status(Response.Status.OK).build();
         }
+
+        //BAD REQUEST  if item doesnt exist
         return Response.status(Response.Status.BAD_REQUEST).build();
     }
 
+    /**
+     *
+     * @param position
+     * @param userid
+     * @return Response OK with aboutusobject
+     */
     @POST
     @Path("addAboutUsObject")
     @RolesAllowed({Group.ADMIN, Group.BOARD})
@@ -259,6 +314,10 @@ public class EpsilonServices {
         return Response.ok(aboutUsObject).build();
     }
 
+    /**
+     *
+     * @return Response with list of aboutusobjects
+     */
     @GET
     @Path("getAboutUsObjects")
     @RolesAllowed({Group.USER, Group.ADMIN, Group.BOARD})
@@ -266,7 +325,13 @@ public class EpsilonServices {
         return Response.ok(em.createNamedQuery(AboutUsObject.FIND_ALL_ABOUT_US_OBJECTS).getResultList()).build();
     }
 
-    //TODO: Change filepath so it matches an ubuntu server instead of windows specific filesystem.
+    /**
+     *
+     * @param base64String
+     * @param userId
+     * @param filename
+     * @return Response OK with image object
+     */
     @POST
     @Path("uploadPictureAsString")
     @RolesAllowed({Group.ADMIN, Group.BOARD})
@@ -305,6 +370,10 @@ public class EpsilonServices {
         }
     }
 
+    /**
+     *
+     * @return Response with a list of images
+     */
     @GET
     @Path("getUserPictures")
     @Produces(MediaType.APPLICATION_JSON)
@@ -316,17 +385,26 @@ public class EpsilonServices {
         for (Image i : imageList) {
             String base64String;
             try {
+                //Converts to base64 string
                 base64String = encodeBase64(i);
                 ImageSend imageSend = new ImageSend(i.getImageId(), base64String, i.getUser());
                 imageSendList.add(imageSend);
             } catch (FileNotFoundException ex) {
                 Logger.getLogger(EpsilonServices.class.getName()).log(Level.SEVERE, null, ex);
+
+                //BAD REQUEST if file is not found
                 return Response.status(Response.Status.BAD_REQUEST).build();
             }
         }
         return Response.ok(imageSendList).build();
     }
 
+    /**
+     *
+     * @param i
+     * @return base64 string of image
+     * @throws FileNotFoundException
+     */
     private String encodeBase64(Image i) throws FileNotFoundException {
         String base64String = "";
 

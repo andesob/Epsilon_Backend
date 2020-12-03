@@ -39,16 +39,32 @@ public class MediaObject extends AbstractDomain {
     @ManyToOne
     User owner;
 
+    /**
+     *
+     */
     protected MediaObject() {
         super();
     }
 
+    /**
+     *
+     * @param id
+     * @param owner
+     */
     public MediaObject(String id, User owner) {
         this();
         this.id = id;
         this.owner = owner;
     }
 
+    /**
+     *
+     * @param id
+     * @param owner
+     * @param name
+     * @param filesize
+     * @param mimetype
+     */
     public MediaObject(String id, User owner, String name, long filesize, String mimetype) {
         this();
         this.id = id;

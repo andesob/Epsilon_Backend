@@ -17,6 +17,12 @@ import javax.json.bind.adapter.JsonbAdapter;
  */
 public class MediaObjectAdapter implements JsonbAdapter<List<MediaObject>, JsonArray> {
 
+    /**
+     *
+     * @param mos
+     * @return
+     * @throws Exception
+     */
     @Override
     public JsonArray adaptToJson(List<MediaObject> mos) throws Exception {
         JsonArrayBuilder result = Json.createArrayBuilder();
@@ -24,6 +30,12 @@ public class MediaObjectAdapter implements JsonbAdapter<List<MediaObject>, JsonA
         return result.build();
     }
 
+    /**
+     *
+     * @param mediaid
+     * @return
+     * @throws Exception
+     */
     @Override
     public List<MediaObject> adaptFromJson(JsonArray mediaid) throws Exception {
         return null;

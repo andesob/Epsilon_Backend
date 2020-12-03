@@ -27,6 +27,9 @@ public abstract class AbstractDomain implements Serializable {
     @Column(nullable = false, updatable = false)
     final private Timestamp created;
 
+    /**
+     *
+     */
     public AbstractDomain() {
         this.created = new Timestamp(System.currentTimeMillis());
         this.version = new Timestamp(System.currentTimeMillis());
@@ -41,6 +44,10 @@ public abstract class AbstractDomain implements Serializable {
         return version;
     }
 
+    /**
+     *
+     * @return
+     */
     public Timestamp getCreated() {
         return created;
     }
