@@ -17,20 +17,38 @@ public class ImageSend {
     String base64String;
     User user;
 
+    /**
+     *
+     * @param imageId
+     * @param base64String
+     * @param user
+     */
     public ImageSend(long imageId, String base64String, User user) {
         this.imageId = imageId;
         this.base64String = base64String;
         this.user = user;
     }
 
+    /**
+     *
+     * @return
+     */
     public String getBase64String() {
         return base64String;
     }
 
+    /**
+     *
+     * @return
+     */
     public User getUser() {
         return user;
     }
 
+    /**
+     *
+     * @return
+     */
     public long getImageId() {
         return imageId;
     }

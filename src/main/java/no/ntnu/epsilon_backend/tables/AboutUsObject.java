@@ -26,6 +26,9 @@ import static no.ntnu.epsilon_backend.tables.AboutUsObject.FIND_ALL_ABOUT_US_OBJ
 @NamedQuery(name = FIND_ALL_ABOUT_US_OBJECTS, query = "select o from AboutUsObject o order by o.aboutUsObjectId")
 public class AboutUsObject implements Serializable {
 
+    /**
+     *
+     */
     public static final String FIND_ALL_ABOUT_US_OBJECTS = "Item.findAllAboutUsObjects";
 
     @Id
@@ -35,11 +38,19 @@ public class AboutUsObject implements Serializable {
     User user;
     String position;
 
+    /**
+     *
+     * @param user
+     * @param position
+     */
     public AboutUsObject(User user, String position) {
         this.user = user;
         this.position = position;
     }
 
+    /**
+     *
+     */
     public AboutUsObject() {
     }
 

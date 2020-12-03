@@ -17,8 +17,16 @@ public class LatitudeLongitude implements Serializable {
     private double latitude;
     private double longitude;
     
+    /**
+     *
+     */
     public LatitudeLongitude(){}
 
+    /**
+     *
+     * @param latitude
+     * @param longitude
+     */
     public LatitudeLongitude(double latitude,double longitude){
         this.latitude = latitude;
         this.longitude = longitude;

@@ -36,8 +36,19 @@ import static no.ntnu.epsilon_backend.tables.Image.FIND_IMAGE_BY_USERID;
 })
 public class Image implements Serializable {
 
+    /**
+     *
+     */
     public static final String FIND_ALL_IMAGES = "Image.findAllImages";
+
+    /**
+     *
+     */
     public static final String FIND_IMAGE_BY_ID = "Image.findById";
+
+    /**
+     *
+     */
     public static final String FIND_IMAGE_BY_USERID = "Image.findByUserid";
 
     @Id
@@ -48,23 +59,43 @@ public class Image implements Serializable {
 
     User user;
 
+    /**
+     *
+     * @param filepath
+     * @param user
+     */
     public Image(String filepath, User user) {
         this.filepath = filepath;
         this.user = user;
     }
 
+    /**
+     *
+     */
     public Image() {
 
     }
 
+    /**
+     *
+     * @return
+     */
     public String getFilepath() {
         return filepath;
     }
 
+    /**
+     *
+     * @return
+     */
     public long getImageId() {
         return imageId;
     }
 
+    /**
+     *
+     * @return
+     */
     public User getUser() {
         return user;
     }

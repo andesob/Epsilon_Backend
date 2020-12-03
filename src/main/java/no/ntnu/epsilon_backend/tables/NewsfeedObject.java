@@ -21,7 +21,7 @@ import static no.ntnu.epsilon_backend.tables.NewsfeedObject.FIND_ALL_NEWSFEEDOBJ
 
 /**
  *
- * @author ander
+ * @author andesob
  */
 @Entity
 @Table(name = "NewsfeedObject")
@@ -30,6 +30,9 @@ import static no.ntnu.epsilon_backend.tables.NewsfeedObject.FIND_ALL_NEWSFEEDOBJ
 @NamedQuery(name = FIND_ALL_NEWSFEEDOBJECTS, query = "select n from NewsfeedObject n order by n.newsfeedObjectId DESC")
 public class NewsfeedObject implements Serializable {
 
+    /**
+     *
+     */
     public static final String FIND_ALL_NEWSFEEDOBJECTS = "NewsfeedObject.findAllNewsfeedObjects";
 
     @Id
@@ -44,10 +47,20 @@ public class NewsfeedObject implements Serializable {
 
     String lastUpdated;
 
+    /**
+     *
+     */
     public NewsfeedObject() {
 
     }
 
+    /**
+     *
+     * @param title
+     * @param contents
+     * @param timeWritten
+     * @param lastUpdated
+     */
     public NewsfeedObject(String title, String contents, String timeWritten, String lastUpdated) {
         this.title = title;
         this.newsContent = contents;

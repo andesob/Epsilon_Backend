@@ -46,6 +46,9 @@ public class KeyService {
         return Files.exists(Paths.get(KEYPAIR_FILENAME));
     }
 
+    /**
+     *
+     */
     @PostConstruct
     protected void postConstruct() {
         if (hasKeyFile()) {
@@ -86,6 +89,10 @@ public class KeyService {
         return Keys.keyPairFor(SignatureAlgorithm.RS256);
     }
 
+    /**
+     *
+     * @return
+     */
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     public Response publicKey() {
@@ -98,10 +105,18 @@ public class KeyService {
         return Response.ok(result.toString()).build();
     }
 
+    /**
+     *
+     * @return
+     */
     public KeyPair getKeyPair() {
         return keyPair;
     }
 
+    /**
+     *
+     * @return
+     */
     public PrivateKey getPrivate() {
         return getKeyPair().getPrivate();
     }

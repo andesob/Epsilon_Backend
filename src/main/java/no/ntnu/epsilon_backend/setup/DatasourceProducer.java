@@ -23,11 +23,18 @@ import static no.ntnu.epsilon_backend.setup.DatasourceProducer.JNDI_NAME;
         url = "jdbc:postgresql://158.38.101.247:5432/")
 public class DatasourceProducer {
 
+    /**
+     *
+     */
     public static final String JNDI_NAME = "jdbc/epsilonApp";
 
     @Resource(lookup = JNDI_NAME)
     DataSource ds;
 
+    /**
+     *
+     * @return
+     */
     @Produces
     public DataSource getDatasource() {
         return ds;

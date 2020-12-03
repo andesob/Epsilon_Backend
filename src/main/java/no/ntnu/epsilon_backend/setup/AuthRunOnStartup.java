@@ -23,6 +23,9 @@ public class AuthRunOnStartup {
     @PersistenceContext
     EntityManager em;
 
+    /**
+     *
+     */
     @PostConstruct
     public void init() {
         long groups = (long) em.createQuery("SELECT count(g.name) from Group g").getSingleResult();
